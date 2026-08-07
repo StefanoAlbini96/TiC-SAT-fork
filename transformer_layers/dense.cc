@@ -21,7 +21,14 @@ void Dense::multiplyweight(std::size_t seq_len, uint32_t *input, uint32_t *outpu
 #ifdef SIMD
     simdComputeBWMA(seq_len, input, output, weight, input_size_, output_size_);
 #else
-    smmComputeBWMA(seq_len, input, output, weight, input_size_, output_size_);
+    printf("Dense computation\n");
+
+    #ifdef NANO_3D
+        smmComputeBWMA_3DLayers(seq_len, input, output, weight, input_size_, output_size_);
+    #else
+        smmComputeBWMA(seq_len, input, output, weight, input_size_, output_size_);
+    #endif
+
 #endif
 #else
 #ifdef SIMD

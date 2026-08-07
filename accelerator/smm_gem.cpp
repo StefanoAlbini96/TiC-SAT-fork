@@ -15,10 +15,27 @@
 #include <arm_neon.h>
 #endif
 
+
+
 #define W_DATA 4
 #define KERNEL_DIM SA_SIZE
-#define MAX_COL (SA_SIZE/W_DATA)
 #define mem2d(data, data_len, row, col)   data[((row)*(data_len))+(col)]
+
+#ifdef NANO_3D
+#define MAX_COL (SA_H/W_DATA)
+#define MAX_COL_OUT (SA_W/W_DATA)
+#else 
+#define MAX_COL (SA_SIZE/W_DATA)
+#define MAX_COL_OUT (MAX_COL)
+#endif
+
+
+#ifdef NANO_3D
+#define TEST (SA_W/W_DATA)
+#else 
+#define TEST (SA_SIZE/W_DATA)
+#endif
+
 
 
 void add8in32(uint32_t &memory, uint32_t &systolicResult);
@@ -140,6 +157,17 @@ uint32_t smmStream(uint32_t rn, int tid) {
     return smmList[tid].streamInOut(rn);
 }
 
+
+uint32_t smmQueue_3Dnano(int rm, uint32_t ra, int tid) {
+    return smmList[tid].inputQueue_3Dnano(rm, ra);
+}
+
+
+// Passing a pointer cause we may need more words
+uint32_t smmStream_3Dnano(uint32_t rn, int tid) {
+    return smmList[tid].streamInOut_3Dnano(rn);
+}
+
 #endif
 
 
@@ -240,6 +268,211 @@ void smmComputeRWMA(std::size_t seq_len, const uint32_t *input, uint32_t *output
     }
 }
 
+
+void smmComputeBWMA_3DLayers(std::size_t seq_len, uint32_t *input, uint32_t *output, uint32_t *weights,
+                             std::size_t input_size_, std::size_t output_size_) {
+    // omp_set_num_threads(CORE_NUM); // set number of threads in "parallel" blocks
+uint32_t *inPtr;
+uint32_t *outPtr;
+uint32_t* weightPtr;
+int rowBlockSize = SA_H;
+int colBlockSize = SA_W / W_DATA;
+// int col_in_3Dlayer = output_size_ / KERNEL_DIM /  N_3D_LAYERS;
+
+int row_blocks_in_3DStack = input_size_ / SA_H;
+int col_blocks_in_3DStack = output_size_ / SA_W / N_3D_LAYERS;
+// # pragma omp parallel private(inPtr, outPtr, weightPtr)
+// {
+
+    // printf("3D NANO VERSION\n");
+
+// int col_in_th = output_size_ / KERNEL_DIM /  N_3D_LAYERS;
+// for(int id=0; id<N_3D_LAYERS; id++){
+ 
+    printf("output = %p\n", (void*)output);
+
+    printf("\nSMM compute BWMA\n");
+    printf("====================\n");
+    printf("Seq len         = \t %ld\n", seq_len);
+    printf("In size         = \t %ld\n", input_size_);
+    printf("Out size        = \t %ld\n", output_size_);
+    printf("----------------------------\n");
+    printf("SA HEIGHT       = \t %d\n", SA_H);
+    printf("SA WIDTH        = \t %d\n", SA_W);
+    printf("----------------------------\n");
+    printf("W DATA          = \t %d\n", W_DATA);
+    printf("MAX COL         = \t %d\n", MAX_COL);
+    printf("MAX COL OUT     = \t %d\n", MAX_COL_OUT);
+    printf("Row block       = \t %d\n", rowBlockSize);
+    printf("Col block       = \t %d\n", colBlockSize);
+    // printf("Row blks in 3D  = \t %d\n", row_blocks_in_3DStack);
+    printf("Col blks in 3D  = \t %d\n", col_blocks_in_3DStack);
+    printf("====================\n");
+
+
+    int cnt = 0;
+
+    weightPtr = weights;
+
+
+    uint32_t mult[N_3D_LAYERS] = {0};
+
+    // printf("\nN loops:\n");
+    // printf("l2Col 3D  = \t %d : %d\n", 0, col_blocks_in_3DStack);
+    // printf("l2Row 3D  = \t %d : %d\n", 0, row_blocks_in_3DStack);
+
+    for (int l2Col_3D_block = 0; l2Col_3D_block < col_blocks_in_3DStack; l2Col_3D_block++){
+
+        for (int l2Row_3D_block = 0; l2Row_3D_block < row_blocks_in_3DStack; l2Row_3D_block++){
+
+            // printf("\nl2Col_3D_block  = %d\n", l2Col_3D_block);
+            // printf("l2Row_3D_block  = %d\n", l2Row_3D_block);
+
+            // For each 3D layer, write a block of weights into the SA
+            for (int layer = 0; layer < N_3D_LAYERS; layer++){
+                // printf("\nWriting weights for layer [%d]\n", layer);
+
+                for (int i = 0; i < rowBlockSize * colBlockSize; i++) {
+                    uint32_t weight = *(weightPtr++);
+                    smmParamWrite(i * W_DATA, weight, layer);
+                    // printf("  |  %d  |\n", weight);
+                }
+            }
+
+
+            // Process the multiplication
+            int base_col_idx = l2Row_3D_block * MAX_COL * seq_len;
+            outPtr = output + l2Col_3D_block * MAX_COL * seq_len;
+            // uint32_t mult;
+            inPtr = input + base_col_idx;
+
+            // printf("Base col idx = %d * %d * %ld * %d = %d\n", l2Row_3D_block, MAX_COL, seq_len, N_3D_LAYERS, base_col_idx);
+            // printf("OutPTR += %d * %d * %ld = %ld\n", l2Col_3D_block, MAX_COL, seq_len, l2Col_3D_block * MAX_COL * seq_len);
+
+            // printf("outPtr = %p\n", (void*)outPtr);
+            // printf("outPtr value = %d\n", *outPtr);
+
+            // Send the same value to all 3D layers
+            uint32_t *loop_inPtr = inPtr;
+            // uint32_t *loop_outPtr = outPtr;
+
+
+            // Counts the cycles that the SA is actually advanced.
+            // Useful to understand when the output is actually meaningful
+            int sa_cycles = 0;
+
+            int dbg = 0;
+
+
+            for (int i = 0; i < seq_len; i++) {
+                for (int j = 0; j < (MAX_COL); j++) {
+
+                    // printf("\n");
+                    // printf("\nSeq len  x  MAX_COL = %d x %d\n", i, j);
+                    
+                    uint32_t content = *(loop_inPtr++);
+                    
+                    // printf("IN = %d\n", content);
+                    
+                    if (j == MAX_COL - 1) {
+                        // printf("COMPUTE: \n");
+                        for(int layer=0; layer<N_3D_LAYERS; layer++){
+                            mult[layer] = smmStream_3Dnano(content, layer);
+                            // printf("SA cycle = %d\n", sa_cycles);
+                        }
+
+                        if (sa_cycles >= (MAX_COL_OUT * (SA_H + SA_W - 1) - 1)) {
+
+                            for(int layer=0; layer<N_3D_LAYERS; layer++){
+                                // if(layer==0){
+                                //     // printf("Mult = %d\n", mult);
+                                // }
+
+                                // printf("Layer %d --> mult = %d\n", layer, mult[layer]);
+
+                                // printf("\nIncrement\n");
+                                // check if the output is valid
+                                add8in32(*(outPtr++), mult[layer]);
+                                // printf("STORE output at SA cycle %d\n", sa_cycles);
+                            }
+                        }
+
+                        sa_cycles++;
+                    } else {
+                        // printf("ENQUEUE\n");
+                        for(int layer=0; layer<N_3D_LAYERS; layer++){
+                            mult[layer] = smmQueue_3Dnano(j % MAX_COL, content, layer);
+                        }
+                    }
+                }
+            }
+
+            // printf("DRAIN...\n");
+
+            sa_cycles = seq_len;
+
+            for (int cycle = 0; cycle < SA_H + SA_W - 1; cycle++) {
+
+                for (int j = 0; j < MAX_COL; j++) {
+
+                    // printf("[%d x %d]\n", cycle, j);
+
+                    if (j == MAX_COL - 1) {
+
+                        for(int layer=0; layer<N_3D_LAYERS; layer++){
+                            // printf("Layer %d\n", layer);
+                            mult[layer] = smmStream_3Dnano(0, layer);
+                            // printf("SA cycle = %d\n", sa_cycles);
+                        }
+                        sa_cycles++;
+
+
+                        // if (sa_cycles >= (MAX_COL_OUT * (SA_H + SA_W - 1))) { // check if the output is valid
+                        if (sa_cycles >= (MAX_COL_OUT * (SA_H + SA_W - 1))) { // check if the output is valid
+                            // printf("\nIncrement\n");
+
+                            // printf("\n---\n");
+                            for(int layer=0; layer<N_3D_LAYERS; layer++){
+                                // printf("Layer %d\n", layer);
+
+                                // printf("Layer %d --> mult = %d\n", layer, mult[layer]);
+                                // printf("Mult = %d --> ", mult[layer]);
+                                // int8_t *res = (int8_t*)&mult[layer]; 
+                                // for(int j=0; j<W_DATA; j++){
+                                //     printf("%d, ", res[j]);
+                                // }
+                                // printf("\n");
+
+                                add8in32(*(outPtr++), mult[layer]);
+                                // printf("STORE output at SA cycle %d\n", sa_cycles);
+                            }
+                        }
+
+                    } else {
+
+                        for(int layer=0; layer<N_3D_LAYERS; layer++){
+                            mult[layer] = smmQueue_3Dnano(j, 0, layer);
+                        }
+                    }
+                }
+            }
+            // exit(0);
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 void smmComputeBWMA(std::size_t seq_len, uint32_t *input, uint32_t *output, uint32_t *weights,
                     std::size_t input_size_, std::size_t output_size_) {
     omp_set_num_threads(CORE_NUM); // set number of threads in "parallel" blocks
@@ -251,26 +484,72 @@ int colBlockSize = KERNEL_DIM / W_DATA;
 int col_in_th = output_size_ / KERNEL_DIM /  CORE_NUM;
 # pragma omp parallel private(inPtr, outPtr, weightPtr)
 {
+
+// int col_in_th = output_size_ / KERNEL_DIM /  N_3D_LAYERS;
+// for(int id=0; id<N_3D_LAYERS; id++){
+
+    printf("\nSMM compute BWMA\n");
+    printf("====================\n");
+    printf("Seq len   = \t %ld\n", seq_len);
+    printf("In size   = \t %ld\n", input_size_);
+    printf("Out size  = \t %ld\n", output_size_);
+    printf("KERN DIM  = \t %d\n", KERNEL_DIM);
+    printf("W DATA    = \t %d\n", W_DATA);
+    printf("MAX COL   = \t %d\n", MAX_COL);
+    printf("Row block = \t %d\n", rowBlockSize);
+    printf("Col block = \t %d\n", colBlockSize);
+    printf("Col in TH = \t %d\n", col_in_th);
+    printf("====================\n");
+
+    int cnt = 0;
+
     int id = omp_get_thread_num();
     int start_index = col_in_th * id;
     int end_index = start_index + col_in_th;
     weightPtr = weights + start_index * (input_size_ / KERNEL_DIM) * rowBlockSize * colBlockSize;
+    
+    // printf("\nN loops:\n");
+    // printf("l2Col     = \t %d : %d\n", start_index, end_index);
+    // printf("l2Row     = \t %d : %ld\n", 0, input_size_ / KERNEL_DIM);
+
+
     for (int l2Col = start_index; l2Col < end_index; l2Col++) {
         for (int l2Row = 0; l2Row < input_size_ / KERNEL_DIM; l2Row++) {
             // Load the kernel with the corresponding weight
 
+            // printf("\n------\nLoop cnt = %d\n", cnt);
+            // printf("L2 COL  = %d\n", l2Col);
+            // printf("L2 ROW  = %d\n", l2Row);
+            // cnt++;
+
             for (int i = 0; i < rowBlockSize * colBlockSize; i++) {
                 uint32_t weight = *(weightPtr++);
                 smmParamWrite(i * W_DATA, weight, id);
+                // printf("  |  %d  |\n", weight);
+                // printf("%d  ", ((int8_t *)(&weight))[0]);
+                // printf("%d  ", ((int8_t *)(&weight))[1]);
+                // printf("%d  ", ((int8_t *)(&weight))[2]);
+                // printf("%d\n", ((int8_t *)(&weight))[3]);
+                // printf("Write idx %d --> %d\n", i, i*W_DATA);
             }
+            // exit(0);
+
+
             // Process the multiplication
             int base_col_idx = l2Row * MAX_COL * seq_len;
             outPtr = output + l2Col * MAX_COL * seq_len;
             uint32_t mult;
             inPtr = input + base_col_idx;
+
+            // printf("Base col idx = %d * %d * %ld = %d\n", l2Row, MAX_COL, seq_len, base_col_idx);
+            // printf("OutPTR      += %d * %d * %d = %ld\n", l2Col, MAX_COL, seq_len, l2Col * MAX_COL * seq_len);
+
             for (int i = 0; i < seq_len; i++) {
                 for (int j = 0; j < MAX_COL; j++) {
+                    // printf("Seq len  x  MAX_COL = %d x %d\n", i, j);
+
                     uint32_t content = *(inPtr);
+                    // printf("IN = %d\n", content);
                     if (j == MAX_COL - 1) {
                         mult = smmStream(*(inPtr++), id);
                     } else {
@@ -278,11 +557,18 @@ int col_in_th = output_size_ / KERNEL_DIM /  CORE_NUM;
                     }
 
                     if ((i * MAX_COL + j) >= (MAX_COL * (2 * KERNEL_DIM - 1) - 1)) {
+                        // printf("\nIncrement\n");
                         // check if the output is valid
+
+                        // printf("Mult = %d\n", mult);
+
                         add8in32(*(outPtr++), mult);
                     }
                 }
             }
+
+            // exit(0);
+
             for (int i = seq_len * MAX_COL;
                  i < MAX_COL * (seq_len + 2 * KERNEL_DIM - 1) - 1; i++) {
                 if ((i % MAX_COL) == MAX_COL - 1) {
@@ -291,13 +577,28 @@ int col_in_th = output_size_ / KERNEL_DIM /  CORE_NUM;
                     mult = smmQueue(i % MAX_COL, 0, id);
                 }
                 if (i >= (MAX_COL * (2 * KERNEL_DIM - 1) - 1)) { // check if the output is valid
+                    // printf("Mult = %d\n", mult);
+                    // printf("\nIncrement\n");
                     add8in32(*(outPtr++), mult);
                 }
             }
         }
+
+        // exit(0);
     }
 }
 }
+
+
+
+
+
+
+
+
+
+
+
 
 void add8in32(uint32_t &memory, uint32_t &systolicResult) {
     /*
@@ -307,10 +608,15 @@ void add8in32(uint32_t &memory, uint32_t &systolicResult) {
     auto *mem_ptr = (int8_t *) (&memory);
     auto *sys_ptr = (int8_t *) (&systolicResult);
     for (int i = 0; i < W_DATA; i++) {
+        // printf("%d + %d =", (int8_t) (*mem_ptr), (int8_t) (*sys_ptr));
         *mem_ptr = (int8_t) (*mem_ptr + *sys_ptr);
+        // printf(" %d\n", (int8_t) (*mem_ptr));
         mem_ptr++;
         sys_ptr++;
     }
+
+    // mem_ptr -= W_DATA;
+    // printf(" --> %u\n", *reinterpret_cast<uint32_t*>(mem_ptr));
 }
 
 void conventionalCompute(std::size_t seq_len, const uint32_t *input, uint32_t *output, uint32_t *weight,

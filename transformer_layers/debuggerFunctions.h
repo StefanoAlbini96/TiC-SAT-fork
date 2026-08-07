@@ -18,4 +18,13 @@ void read_weight_from_file(const std::string& filename, uint32_t* kernel, int n_
 void interleave_hidden_flag(uint32_t* kernel, int n_row, int n_col, uint32_t hidden_flag);
 void interleave_hidden_flag_zero_free(uint32_t*& kernel, int n_row, int n_col, uint32_t hidden_flag);
 
+
+void blockWise2Block3Dnano(const uint32_t * blockWise, uint32_t* rowWise, int n_row, int n_col);
+// void blockWise2Block3Dnano_inputs(const uint32_t * blockWise, uint32_t* block3Dnano, int n_row, int n_col);
+// void blockWise2Block3Dnano_inputs(const uint32_t *src, uint32_t *dst, int n_rows, int n_cols);
+void blockWise2Block3Dnano_inputs(const uint32_t *src,
+                                  uint32_t *dst,
+                                  int rows,
+                                  int cols);
+
 #endif //FVLLMONTITRANSFORMER_DEBUGGERFUNCTIONS_H

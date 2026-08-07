@@ -20,6 +20,12 @@ void smmComputeRWMA(std::size_t seq_len, const uint32_t *input, uint32_t *output
 void smmComputeBWMA(std::size_t seq_len, uint32_t *input, uint32_t *output, uint32_t *weights,
                     std::size_t input_size_, std::size_t output_size_);
 
+
+void smmComputeBWMA_3DLayers(std::size_t seq_len, uint32_t *input, uint32_t *output, uint32_t *weights,
+                             std::size_t input_size_, std::size_t output_size_);
+
+                
+
 void simdComputeRWMA(std::size_t seq_len, const uint32_t *input, uint32_t *output, uint32_t *weights,
                      std::size_t input_size_, std::size_t output_size_);
 

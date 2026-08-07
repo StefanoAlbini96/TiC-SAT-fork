@@ -36,30 +36,48 @@
 
 #define KERNEL_DIM SA_SIZE
 #define W_DATA 4
+
+#ifdef NANO_3D
+#define MAX_COL (SA_H/W_DATA)
+#else 
 #define MAX_COL (SA_SIZE/W_DATA)
+#endif
 
 #define mem2d(data,data_len,row,col)   data[((row)*(data_len))+(col)]
 
 class SystolicMatrixMultiplication {
   private:
     // System this ACM belongs to.
-    int8_t weights[KERNEL_DIM * KERNEL_DIM]{};
 
+
+    #ifdef NANO_3D
+    
+    int8_t weights[SA_H * SA_W]{};
+    int8_t inWaitingMemory[SA_H * SA_H]{};
+    int8_t inputMemory[SA_H * SA_W]{};
+    uint8_t outWaitingMemory[SA_W * SA_W]{};
+    int32_t outputMemory[SA_W * (SA_H + 1)]{};
+
+    #else
+
+    int8_t weights[KERNEL_DIM * KERNEL_DIM]{};
+    int8_t inWaitingMemory[KERNEL_DIM * KERNEL_DIM]{};
+    int8_t inputMemory[KERNEL_DIM * KERNEL_DIM]{};
+    uint8_t outWaitingMemory[KERNEL_DIM * KERNEL_DIM]{};
     int32_t outputMemory[KERNEL_DIM * (KERNEL_DIM + 1)]{};
 
-    int8_t inputMemory[KERNEL_DIM * KERNEL_DIM]{};
+    #endif
 
-    int8_t inWaitingMemory[KERNEL_DIM * KERNEL_DIM]{};
-
-    uint8_t outWaitingMemory[KERNEL_DIM * KERNEL_DIM]{};
 
     bool non_zero_tile = false;
     
   public:
     bool loadWeights(int idx, uint32_t  val);
     uint32_t inputQueue(int col, uint32_t  val);
+    uint32_t inputQueue_3Dnano(int col, uint32_t  val);
     void printWeights();
     uint32_t streamInOut(uint32_t val);
+    uint32_t streamInOut_3Dnano(uint32_t val);
  };
 
 #endif // __SYSTOLIC_M2M_H__

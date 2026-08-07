@@ -14,6 +14,38 @@
 #define MAX_COL (SA_SIZE/4)
 
 
+
+void print_weight_blocks(const uint32_t *kernel,
+                         int n_row,
+                         int n_col)
+{
+    const uint32_t *ptr = kernel;
+
+
+    for (int i = 0; i < n_row / KERNEL_DIM; i++) {
+        for (int j = 0; j < n_col / MAX_COL; j++) {
+            for (int ii = 0; ii < KERNEL_DIM; ii++) {
+                for (int jj = 0; jj < MAX_COL; jj++) {
+                    
+                    // const int8_t* value = reinterpret_cast<const int8_t *>(ptr);
+                    // for (int k = 0; k < 4; k++) {
+                    //     printf("%d, ", value[k]);
+                    // }
+                    // printf("\n");
+                    printf("%d\n", *(ptr));
+
+                    ptr++;
+                }
+            }
+            printf("\n-------------\n"); 
+        }
+        printf("\n====================\n");
+    }
+}
+
+
+
+
 void fill_kernel(uint32_t *kernel, int kernel_size) {
     for (int i = 0; i < kernel_size; i++) {
         uint32_t result = 0;
@@ -25,9 +57,25 @@ void fill_kernel(uint32_t *kernel, int kernel_size) {
 }
 
 void fill_weight(uint32_t *kernel, int n_row, int n_col) {
+
+    // int kernel_rows;
+    // int kernel_cols;
+
+    // #ifdef NANO_3D
+    //     kernel_rows = SA_H;
+    //     kernel_cols = SA_W;
+    // #else
+    //     kernel_rows = KERNEL_DIM;
+    //     kernel_cols = KERNEL_DIM;
+    // #endif
+
+    // printf("Generating with KR x KC = [%d x %d]\n", kernel_rows, kernel_cols);
+
+
     uint32_t *kernel_ptr = kernel;
     for (int i = 0; i < n_row / KERNEL_DIM; i++) {
         for (int j = 0; j < n_col / MAX_COL; j++) {
+
             for (int ii = 0; ii < KERNEL_DIM; ii++) {
                 for (int jj = 0; jj < MAX_COL; jj++) {
                     uint32_t result = 0;
@@ -41,6 +89,11 @@ void fill_weight(uint32_t *kernel, int n_row, int n_col) {
         }
     }
 }
+
+
+
+
+
 
 void saveWeight(int n_head, int qkv, int size, uint32_t *array, const std::string &dir_name) {
     // Write the kernel array to file
@@ -79,7 +132,7 @@ void test() {
 
     // The directory where the weights are saved
     // Change this to the directory where you want to save/load the weights
-    std::string dir_name = "/path/to/weight/directory";
+    std::string dir_name = "/home/albini/Documents/ESL/TiC-SAT-fork/weights_data";
 
     uint32_t *tensor_in = new uint32_t[D_SEQ * D_MODEL >> 2];
 #ifdef RELOAD_WEIGHT
@@ -93,12 +146,34 @@ void test() {
     saveWeight(-1, -1, D_SEQ * D_MODEL >> 2, tensor_in, dir_name);
 #endif
 
+
 #ifndef BWMA
     uint32_t tensorInRowWise[D_SEQ * D_MODEL >> 2];
     // By default, the saved tensor is in block-wise format
     // We need to convert it to row-wise format
     blockWise2RowWise(tensor_in, tensorInRowWise, D_SEQ, D_MODEL >> 2);
     tensor_in = tensorInRowWise;
+
+#else
+    #ifdef NANO_3D
+
+
+        // printf("--> %d\n", tensor_in[0]);
+        // printf("--> %d\n", tensor_in[1]);
+        // printf("--> %d\n", tensor_in[8]);
+
+        printf("\n\n Rearrangeing INPUTS....\n");
+        uint32_t tensorIn3Dnano[D_SEQ * D_MODEL >> 2];
+        blockWise2Block3Dnano_inputs(tensor_in, tensorIn3Dnano, D_SEQ, D_MODEL >> 2);
+        tensor_in = tensorIn3Dnano;
+
+        // printf("--> %d\n", tensor_in[0]);
+        // printf("--> %d\n", tensor_in[1]);
+
+        // print_weight_blocks(tensorIn3Dnano, D_SEQ, D_Q >> 2);
+        // exit(0);
+
+    #endif
 #endif
 
     uint32_t *out = new uint32_t[D_SEQ * D_MODEL >> 2]();
@@ -115,7 +190,28 @@ void test() {
         loadWeight(n, 1, head_qkv_size, key_kernel, dir_name);
         loadWeight(n, 2, head_qkv_size, value_kernel, dir_name);
 #else
+
+
+        int cnt = 0;
         fill_weight(query_kernel, D_MODEL, D_Q >> 2);
+        // for(int i=0; i<(D_MODEL * D_Q >> 2); i++){
+            
+            // const int8_t *w = reinterpret_cast<const int8_t *>(&query_kernel[i]);
+            // for (int k = 0; k < 4; k++) {
+            //     printf("%4d", w[k]);
+            // }
+            // printf("\n");
+            // cnt++;
+            // if(cnt == 4){
+            //     printf("\n");
+            //     cnt=0;
+            // }
+        //     printf("%d\n", query_kernel[i]);
+
+        // }
+        // printf("\n\n");
+        // exit(0);
+
         fill_weight(key_kernel, D_MODEL, D_Q >> 2);
         fill_weight(value_kernel,  D_MODEL, D_Q >> 2);
 
@@ -123,6 +219,7 @@ void test() {
         saveWeight(n, 1, head_qkv_size, key_kernel, dir_name);
         saveWeight(n, 2, head_qkv_size, value_kernel, dir_name);
 #endif
+
 
 #ifndef BWMA
         // By default, the saved weights are in block-wise format
@@ -136,7 +233,30 @@ void test() {
         uint32_t* valueRowWise = new uint32_t [D_MODEL * D_Q >> 2];
         blockWise2RowWise(value_kernel, valueRowWise, D_MODEL, D_Q >> 2);
         value_kernel = valueRowWise;
+
+#else
+
+    #ifdef NANO_3D
+
+        // printf("\n\n Rearrangeing....\n");
+        uint32_t* queryBW3Dnano = new uint32_t [D_MODEL * D_Q >> 2];
+        blockWise2Block3Dnano(query_kernel, queryBW3Dnano, D_MODEL, D_Q >> 2);
+        query_kernel = queryBW3Dnano;
+
+        // print_weight_blocks(queryBW3Dnano, D_MODEL, D_Q >> 2);
+        // exit(0);
+
+        uint32_t* keyBW3Dnano = new uint32_t [D_MODEL * D_Q >> 2];
+        blockWise2Block3Dnano(key_kernel, keyBW3Dnano, D_MODEL, D_Q >> 2);
+        key_kernel = keyBW3Dnano;
+
+    #endif 
+    
 #endif
+
+        // print_weight_blocks(query_kernel, D_MODEL, D_Q >> 2);
+
+// exit(0);
 
         weightVec[n * 3] = query_kernel;
         weightVec[n * 3 + 1] = key_kernel;
@@ -184,6 +304,8 @@ void test() {
 
     TransformerBlock selfatten(D_SEQ, D_MODEL, D_Q, NUM_HEAD, D_FF, weightVec, KERNEL_DIM, MAX_COL);
     selfatten.compute(D_SEQ, tensor_in, out);
+
+    // printf("%d\n", out[0]);
 }
 
 int main() {
