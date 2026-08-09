@@ -56,7 +56,7 @@ void SingleHeadSelfAttn::compute(std::size_t seq_len, uint32_t *input, uint32_t 
     // std::cout << static_cast<int>(res_p_q[2]) << std::endl;
     // std::cout << static_cast<int>(res_p_q[3]) << std::endl;
 
-    printf("outPtr = %p\n", (void*)query_layer_out);
+    // printf("outPtr = %p\n", (void*)query_layer_out);
 
     for(int i=0; i<(D_SEQ * (D_Q / 4)); i++){
         printf("[%d]\t", i);
@@ -67,6 +67,7 @@ void SingleHeadSelfAttn::compute(std::size_t seq_len, uint32_t *input, uint32_t 
         }
         printf("\n");
     }
+    exit(0);
 
 
     // std::cout << query_layer_out[0] << std::endl;

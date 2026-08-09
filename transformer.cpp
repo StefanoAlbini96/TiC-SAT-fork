@@ -166,6 +166,9 @@ void test() {
         uint32_t tensorIn3Dnano[D_SEQ * D_MODEL >> 2];
         blockWise2Block3Dnano_inputs(tensor_in, tensorIn3Dnano, D_SEQ, D_MODEL >> 2);
         tensor_in = tensorIn3Dnano;
+        printf("Rearrangeing COMPLETED....\n");
+
+        // exit(0);
 
         // printf("--> %d\n", tensor_in[0]);
         // printf("--> %d\n", tensor_in[1]);
@@ -196,16 +199,16 @@ void test() {
         fill_weight(query_kernel, D_MODEL, D_Q >> 2);
         // for(int i=0; i<(D_MODEL * D_Q >> 2); i++){
             
-            // const int8_t *w = reinterpret_cast<const int8_t *>(&query_kernel[i]);
-            // for (int k = 0; k < 4; k++) {
-            //     printf("%4d", w[k]);
-            // }
-            // printf("\n");
-            // cnt++;
-            // if(cnt == 4){
-            //     printf("\n");
-            //     cnt=0;
-            // }
+        //     const int8_t *w = reinterpret_cast<const int8_t *>(&query_kernel[i]);
+        //     for (int k = 0; k < 4; k++) {
+        //         printf("%4d", w[k]);
+        //     }
+        //     printf("\n");
+        //     cnt++;
+        //     if(cnt == 4){
+        //         printf("\n");
+        //         cnt=0;
+        //     }
         //     printf("%d\n", query_kernel[i]);
 
         // }

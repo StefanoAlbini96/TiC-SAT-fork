@@ -39,7 +39,7 @@ void print_buf(int8_t *ptr, int height, int width){
     int c = 0;
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            printf("%d, ", ptr[c]);
+            printf("%d,  \t", ptr[c]);
             c++;
         
         }
@@ -60,6 +60,8 @@ bool SystolicMatrixMultiplication::loadWeights(int idx, uint32_t val) {
     return non_zero_tile;
 }
 
+
+// Puts the new word of input and also reads a result word
 uint32_t SystolicMatrixMultiplication::inputQueue_3Dnano(int col, uint32_t val) {
 
 
@@ -79,14 +81,49 @@ uint32_t SystolicMatrixMultiplication::inputQueue_3Dnano(int col, uint32_t val) 
 
     // print_buf(inWaitingMemory, SA_H, SA_H);
 
+
+
+    // printf("\n");
+    // print_buf((int8_t*)outWaitingMemory, SA_W, SA_W);
+    // printf("\n");
+    
+
     // Return the output
     uint32_t result = 0;
+    // int result_idx = ((col+1)%MAX_COL) * W_DATA;
     int result_idx = ((col+1)%MAX_COL) * W_DATA;
+    // printf("result idx = ((%d + 1) % %d) * %d = %d\n", col, MAX_COL, W_DATA, ((col+1)%MAX_COL) * W_DATA);
     for (int i = 0; i < W_DATA; i++) {
+        // printf("r, c = %d , %d --> %d\n", SA_W - result_idx - i - 1, result_idx + i);
         result |=  mem2d(outWaitingMemory, SA_W, SA_W - result_idx - i - 1, result_idx + i ) << (8 * (W_DATA - i - 1));
     }
     return result;
 }
+
+
+// // Puts the new word of input but doesn't read any result
+// void SystolicMatrixMultiplication::inputQueue_3Dnano(int col, uint32_t val) {
+
+
+//     // printf("Enqueueing in col = %d\n", col);
+//     // print_buf(inWaitingMemory, SA_H, SA_H);
+//     // printf("\n");
+
+//     // Split the input to an array
+//     // printf("New val --> ");
+//     for (int i=0; i < W_DATA; i++){
+//         auto currVal = (int8_t)((val >> (8 * (W_DATA - i -1))) & 0xff);
+//         // printf("%d, ", currVal);
+//         int row_index = (col*W_DATA+i);
+//         mem2d(inWaitingMemory, SA_H, row_index, SA_H - row_index - 1) = currVal; // off-diagonal of the waiting memory
+//     }
+//     // printf("\n");
+
+//     // print_buf(inWaitingMemory, SA_H, SA_H);
+// }
+
+
+
 
 
 uint32_t SystolicMatrixMultiplication::inputQueue(int col, uint32_t val) {
@@ -96,6 +133,11 @@ uint32_t SystolicMatrixMultiplication::inputQueue(int col, uint32_t val) {
         int row_index = (col*W_DATA+i);
         mem2d(inWaitingMemory, KERNEL_DIM, row_index, KERNEL_DIM - row_index - 1) = currVal; // off-diagonal of the waiting memory
     }
+
+
+    // printf("\n");
+    // print_buf((int8_t*)outWaitingMemory, SA_W, SA_W);
+    // printf("\n");
 
     // Return the output
     uint32_t result = 0;
@@ -218,6 +260,12 @@ uint32_t SystolicMatrixMultiplication::streamInOut_3Dnano(uint32_t val) {
     // printf("\n----- \nWAIT\n");
     // print_buf(inWaitingMemory, SA_H, SA_H);
 
+
+
+    // printf("\n");
+    // print_buf((int8_t*)outWaitingMemory, SA_W, SA_W);
+    // printf("\n");
+
     // Return the output
     uint32_t result = 0;
     for (int i = 0; i < W_DATA; i++) {
@@ -299,6 +347,9 @@ uint32_t SystolicMatrixMultiplication::streamInOut(uint32_t val) {
         mem2d(outWaitingMemory, KERNEL_DIM, 0, j) = (uint8_t)(mem2d(outputMemory, KERNEL_DIM, KERNEL_DIM, j) & 0xFF);
     }
 
+    // printf("\n");
+    // print_buf((int8_t*)outWaitingMemory, SA_W, SA_W);
+    // printf("\n");
 
     // Return the output
     uint32_t result = 0;

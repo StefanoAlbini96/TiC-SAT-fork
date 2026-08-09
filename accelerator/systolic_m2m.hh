@@ -39,8 +39,10 @@
 
 #ifdef NANO_3D
 #define MAX_COL (SA_H/W_DATA)
+#define MAX_COL_OUT (SA_W/W_DATA)
 #else 
 #define MAX_COL (SA_SIZE/W_DATA)
+#define MAX_COL_OUT (MAX_COL)
 #endif
 
 #define mem2d(data,data_len,row,col)   data[((row)*(data_len))+(col)]
@@ -74,6 +76,7 @@ class SystolicMatrixMultiplication {
   public:
     bool loadWeights(int idx, uint32_t  val);
     uint32_t inputQueue(int col, uint32_t  val);
+    // uint32_t inputQueue_getRes_3Dnano(int col, uint32_t val);
     uint32_t inputQueue_3Dnano(int col, uint32_t  val);
     void printWeights();
     uint32_t streamInOut(uint32_t val);

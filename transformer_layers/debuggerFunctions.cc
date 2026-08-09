@@ -4,7 +4,14 @@
 
 #define W_DATA 4
 #define KERNEL_DIM SA_SIZE
+
+#ifdef NANO_3D
+#define MAX_COL (SA_H/W_DATA)
+#define MAX_COL_OUT (SA_W/W_DATA)
+#else 
 #define MAX_COL (SA_SIZE/W_DATA)
+#define MAX_COL_OUT (MAX_COL)
+#endif
 
 #include "debuggerFunctions.h"
 
@@ -151,35 +158,95 @@ void interleave_hidden_flag_zero_free(uint32_t*& kernel, int n_row, int n_col, u
 void blockWise2Block3Dnano(const uint32_t * blockWise, uint32_t* block3Dnano, int n_row, int n_col){
 
     int blockRows = n_row / SA_H;
-    int blockCols = (n_col * W_DATA) / SA_W;
+    int blockCols = ((n_col * W_DATA) / SA_W) / N_3D_LAYERS;
     int blockSize = SA_H * MAX_COL;
     int groupSize = N_3D_LAYERS;
 
-    // printf("blockRows = %d\n", blockRows);
-    // printf("blockCols = %d\n", blockCols);
-    // printf("blockSize = %d\n", blockSize);
-    // printf("groupSize = %d\n", groupSize);
+    printf("==============\n");
+    printf("n_rows  = %d\n", n_row);
+    printf("n_cols  = %d\n", n_col);
+    printf("==============\n");
+    printf("blockRows = %d / %d = %d\n", n_row, SA_H, blockRows);
+    printf("blockCols = %d * %d / %d / %d = %d\n", n_col, W_DATA, SA_W, N_3D_LAYERS, blockCols);
+    printf("blockSize = %d\n", blockSize);
+    printf("groupSize = %d\n", groupSize);
 
+    // Number of row blocks in the new group
+    int group_row_blocks = N_3D_LAYERS;
 
+    // Number of col blocks in the new group
+    int group_col_blocks = N_3D_LAYERS;
+
+    int old_block_size = SA_SIZE * SA_SIZE / W_DATA;
+    int oldBlocks_in_newBlock = group_row_blocks * group_col_blocks;
+    int new_block_size = oldBlocks_in_newBlock * old_block_size;
+
+    // printf("Old block size = %d\n", old_block_size);
+    // printf("New block size = %d\n", new_block_size);
+    
+    const uint32_t *src = blockWise;
     uint32_t *dst = block3Dnano;
 
-    for (int groupCol = 0; groupCol < blockCols; groupCol += groupSize) {
+    for (int col_block = 0; col_block < blockCols; col_block++){
 
-        int colsInGroup = std::min(groupSize, blockCols - groupCol);
+        int src_col_idx = (col_block * (blockCols * oldBlocks_in_newBlock));
 
-        for (int blockRow = 0; blockRow < blockRows; blockRow++) {
+        for (int row_block = 0; row_block < blockRows; row_block++){ 
 
-            for (int c = 0; c < colsInGroup; c++) {
+            // int src_row_offset = row_block * oldBlocks_in_newBlock;
 
-                const uint32_t *src =
-                    blockWise +
-                    ((groupCol + c) * blockRows + blockRow) * blockSize;
+            // printf("\nNEW BLOCK  = [%d, %d]\n", row_block, col_block);
 
-                std::copy(src, src + blockSize, dst);
-                dst += blockSize;
+            for (int colBlock_in_group = 0; colBlock_in_group < group_col_blocks; colBlock_in_group++){
+                // printf("%d\n", colBlock_in_group);
+            
+                int src_col_idx =   (col_block * (blockCols * oldBlocks_in_newBlock)) +
+                                    colBlock_in_group * blockRows * group_row_blocks;
+
+                for (int rowBlock_in_group = 0; rowBlock_in_group < group_row_blocks; rowBlock_in_group++){
+                    // printf("++ %d\n", rowBlock_in_group);
+                
+                    // printf("SRC COL IDX = %d\n", src_col_idx);
+
+                    int src_idx =   src_col_idx +
+                                    (row_block * group_row_blocks) + rowBlock_in_group;
+                    src_idx *= old_block_size;
+                    // printf("SRC COL IDX = %d\n", src_idx);
+
+                    std::copy(&src[src_idx], &src[src_idx + old_block_size], dst);
+                    dst += old_block_size;
+                }
             }
+            
         }
     }
+
+
+    // for (int groupCol = 0; groupCol < blockCols; groupCol += groupSize) {
+
+    //     int colsInGroup = std::min(groupSize, blockCols - groupCol);
+
+    //     // printf("Cols in Group = %d\n", colsInGroup);
+
+    //     for (int blockRow = 0; blockRow < blockRows; blockRow++) {
+
+    //         printf("Block [%d %d]\n", blockRow, groupCol);
+
+    //         for (int c = 0; c < colsInGroup; c++) {
+
+    //             const uint32_t *src =
+    //                 blockWise +
+    //                 ((groupCol + c) * blockRows + blockRow) * blockSize;
+    //                 printf("ptr --> %d\n", ((groupCol + c) * blockRows + blockRow) * blockSize);
+
+    //             std::copy(src, src + blockSize, dst);
+    //             dst += blockSize;
+
+    //             // printf("it = %d\n", cnt);
+    //             // cnt++;
+    //         }
+    //     }
+    // }
 }
 
 
@@ -269,18 +336,22 @@ void blockWise2Block3Dnano_inputs(const uint32_t *src,
                                   int rows,
                                   int cols)
 {
-    int oldMC = MAX_COL;       // current packing
+    int oldMC = SA_W / W_DATA;       // current packing
     int newMC = SA_H / W_DATA; // desired packing
 
-    printf("oldMC = %d\n", oldMC);
-    printf("newMC = %d\n", newMC);
+    // printf("=============\n");
+    // printf("rows = %d\n", rows);
+    // printf("cols = %d\n", cols);
+    // printf("=============\n");
+
+    // printf("oldMC = %d / %d = %d\n", SA_W, W_DATA, oldMC);
+    // printf("newMC = %d / %d = %d\n", SA_H, W_DATA, newMC);
 
     // Number of column groups after repacking
-    int groups = (cols * oldMC) / newMC;
+    // int groups = (cols * oldMC) / newMC;
+    int groups = cols / newMC;
 
-    printf("rows = %d\n", rows);
-    printf("cols = %d\n", cols);
-    printf("groups = %d\n", groups);
+    // printf("groups = %d\n", groups);
 
 
     for (int group = 0; group < groups; group++) {
@@ -325,11 +396,17 @@ void blockWise2Block3Dnano_inputs(const uint32_t *src,
                 int dst_idx =
                     (group * rows + row) * newMC + k;
 
+                // printf("Dest[%d] = src[%d]\n", dst_idx, src_idx);
                 dst[dst_idx] = src[src_idx];
                 
             }
         }
     }
+
+
+    // for(int i=0; i<20; i++){
+    //     printf("dst[%d] = %d\n", i, dst[i]);
+    // }
 }
 
 
