@@ -39,7 +39,7 @@ TransformerBlock::~TransformerBlock() = default;
 void TransformerBlock::compute(std::size_t seq_len, uint32_t *input, uint32_t *output) {
     system("m5 resetstats");
     for (int n=0; n<num_heads_; n++){
-        std::cout << "Head : " << n << std::endl;
+        std::cout << "\n ------- Computing Head : " << n << std::endl;
         selfatten[n]->compute(seq_len, input, multihead_out + n * (seq_len * head_hidden_size_ >> 2));
 
         // exit(0);

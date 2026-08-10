@@ -451,17 +451,18 @@ int col_blocks_in_3DStack = output_size_ / SA_W / N_3D_LAYERS;
                 }
             }
 
-            // printf("DRAIN...\n");
+            printf("\n------\nDRAIN...\n------\n");
             // printf("output = %p\n", (void*)outPtr);
 
             sa_cycles = seq_len;
             in_cnt_group = 1;
 
             for (int cycle = 0; cycle < SA_H + SA_W - 1; cycle++) {
+                // printf("\n");
 
                 for (int j = 0; j < MAX_COL; j++) {
 
-                    // printf("[%d x %d]\n", cycle, j);
+                    printf("[%d x %d]\n", cycle, j);
                     // printf("\n");
                     // bool cnt_group_condition =  ((in_cnt_group % N_3D_LAYERS) == 0);
 
@@ -503,7 +504,7 @@ int col_blocks_in_3DStack = output_size_ / SA_W / N_3D_LAYERS;
                     bool latency_condition = (sa_cycles >= ((SA_H + SA_W - 1)));
                     if (latency_condition) {
                         // printf("output = %p\n", (void*)outPtr);
-                        // printf("USE OUTPUT...\n");
+                        printf("USE OUTPUT...\n");
                         // printf("\nIncrement\n");
 
                         // printf("\n---\n");
@@ -591,15 +592,15 @@ int col_in_th = output_size_ / KERNEL_DIM /  CORE_NUM;
         for (int l2Row = 0; l2Row < input_size_ / KERNEL_DIM; l2Row++) {
             // Load the kernel with the corresponding weight
 
-            printf("\n------\nLoop cnt = %d\n", cnt);
-            printf("L2 COL  = %d\n", l2Col);
-            printf("L2 ROW  = %d\n", l2Row);
-            cnt++;
+            // printf("\n------\nLoop cnt = %d\n", cnt);
+            // printf("L2 COL  = %d\n", l2Col);
+            // printf("L2 ROW  = %d\n", l2Row);
+            // cnt++;
 
             for (int i = 0; i < rowBlockSize * colBlockSize; i++) {
                 uint32_t weight = *(weightPtr++);
                 smmParamWrite(i * W_DATA, weight, id);
-                printf("  |  %d  |\n", weight);
+                // printf("  |  %d  |\n", weight);
                 // printf("%d  ", ((int8_t *)(&weight))[0]);
                 // printf("%d  ", ((int8_t *)(&weight))[1]);
                 // printf("%d  ", ((int8_t *)(&weight))[2]);

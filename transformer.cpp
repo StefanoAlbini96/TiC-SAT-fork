@@ -184,6 +184,7 @@ void test() {
     int head_qkv_size = D_Q * D_MODEL >> 2;
 
     for (int n = 0; n < NUM_HEAD; n++) {
+        printf("\nWEIGHTS FOR HEAD [%d]\n", n);
         volatile auto query_kernel = new uint32_t[D_Q * D_MODEL >> 2]();
         volatile auto key_kernel = new uint32_t[D_Q * D_MODEL >> 2]();
         volatile auto value_kernel = new uint32_t[D_Q * D_MODEL >> 2]();
@@ -200,6 +201,7 @@ void test() {
         // for(int i=0; i<(D_MODEL * D_Q >> 2); i++){
             
         //     const int8_t *w = reinterpret_cast<const int8_t *>(&query_kernel[i]);
+        //     printf("[%d]  %d --> ", i, query_kernel[i]);
         //     for (int k = 0; k < 4; k++) {
         //         printf("%4d", w[k]);
         //     }
@@ -209,7 +211,6 @@ void test() {
         //         printf("\n");
         //         cnt=0;
         //     }
-        //     printf("%d\n", query_kernel[i]);
 
         // }
         // printf("\n\n");
@@ -246,6 +247,25 @@ void test() {
         blockWise2Block3Dnano(query_kernel, queryBW3Dnano, D_MODEL, D_Q >> 2);
         query_kernel = queryBW3Dnano;
 
+        // int cnt = 0;
+        // for(int i=0; i<(D_MODEL * D_Q >> 2); i++){
+            
+        //     const int8_t *w = reinterpret_cast<const int8_t *>(&query_kernel[i]);
+        //     printf("[%d]  %d --> ", i, query_kernel[i]);
+        //     for (int k = 0; k < 4; k++) {
+        //         printf("%4d", w[k]);
+        //     }
+        //     printf("\n");
+        //     cnt++;
+        //     if(cnt == 4){
+        //         printf("\n");
+        //         cnt=0;
+        //     }
+
+        // }
+        // printf("\n\n");
+        // exit(0);
+
         // print_weight_blocks(queryBW3Dnano, D_MODEL, D_Q >> 2);
         // exit(0);
 
@@ -261,6 +281,7 @@ void test() {
 
 // exit(0);
 
+        printf("STORING Q ptr at index %d\n", n*3);
         weightVec[n * 3] = query_kernel;
         weightVec[n * 3 + 1] = key_kernel;
         weightVec[n * 3 + 2] = value_kernel;

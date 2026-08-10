@@ -45,7 +45,7 @@ SingleHeadSelfAttn::~SingleHeadSelfAttn() {
 
 void SingleHeadSelfAttn::compute(std::size_t seq_len, uint32_t *input, uint32_t *output) {
     
-    printf("outPtr = %p\n", (void*)query_layer_out);
+    // printf("outPtr = %p\n", (void*)query_layer_out);
     // printf("Query compute() with:\n- seq len = \t %ld\n", seq_len);
     query_layer->compute(seq_len, input, query_layer_out);
     printf("\n==========================\n");
@@ -67,7 +67,7 @@ void SingleHeadSelfAttn::compute(std::size_t seq_len, uint32_t *input, uint32_t 
         }
         printf("\n");
     }
-    exit(0);
+    // exit(0);
 
 
     // std::cout << query_layer_out[0] << std::endl;

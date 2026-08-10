@@ -181,11 +181,15 @@ void blockWise2Block3Dnano(const uint32_t * blockWise, uint32_t* block3Dnano, in
     int oldBlocks_in_newBlock = group_row_blocks * group_col_blocks;
     int new_block_size = oldBlocks_in_newBlock * old_block_size;
 
-    // printf("Old block size = %d\n", old_block_size);
-    // printf("New block size = %d\n", new_block_size);
+
+    printf("Old block size = %d\n", old_block_size);
+    printf("oldBlocks_in_newBlock = %d\n", oldBlocks_in_newBlock);
+    printf("New block size = %d\n", new_block_size);
     
     const uint32_t *src = blockWise;
     uint32_t *dst = block3Dnano;
+
+    int cnt = 0; 
 
     for (int col_block = 0; col_block < blockCols; col_block++){
 
@@ -197,11 +201,17 @@ void blockWise2Block3Dnano(const uint32_t * blockWise, uint32_t* block3Dnano, in
 
             // printf("\nNEW BLOCK  = [%d, %d]\n", row_block, col_block);
 
+            // printf("cnt = %d\n", cnt);
+            // cnt++;
+
             for (int colBlock_in_group = 0; colBlock_in_group < group_col_blocks; colBlock_in_group++){
                 // printf("%d\n", colBlock_in_group);
             
-                int src_col_idx =   (col_block * (blockCols * oldBlocks_in_newBlock)) +
+                // int src_col_idx =   (col_block * (blockCols * oldBlocks_in_newBlock)) +
+                //                     colBlock_in_group * blockRows * group_row_blocks;
+                int src_col_idx =   (col_block * (blockRows * oldBlocks_in_newBlock)) +
                                     colBlock_in_group * blockRows * group_row_blocks;
+
 
                 for (int rowBlock_in_group = 0; rowBlock_in_group < group_row_blocks; rowBlock_in_group++){
                     // printf("++ %d\n", rowBlock_in_group);
@@ -220,6 +230,7 @@ void blockWise2Block3Dnano(const uint32_t * blockWise, uint32_t* block3Dnano, in
             
         }
     }
+    // exit(0);
 
 
     // for (int groupCol = 0; groupCol < blockCols; groupCol += groupSize) {
