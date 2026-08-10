@@ -94,32 +94,23 @@ uint32_t SystolicMatrixMultiplication_3D::inputQueue_3Dnano(int col, uint32_t va
     int layer_cnt = out_cnt / MAX_COL_OUT;
     // printf("Reading out_cnt = %d  | col_cnt = %d  | layer_cnt = %d\n", out_cnt, col_cnt, layer_cnt);
 
-
-
-
-    // printf("\n");
-    // print_buf_3Dnano((int8_t*)outWaitingMemory[layer_cnt], SA_W, SA_W);
-    // printf("\n");
-    // printf("%d\n", outWaitingMemory[layer_cnt][7]);
-    // printf("Direct:\n");
-
-    // for (int r = 0; r < SA_W; r++) {
-    //     for (int c = 0; c < SA_W; c++) {
-    //         printf("%4d ",
-    //             mem2d(outWaitingMemory[layer_cnt], SA_W, r, c));
-    //     }
-    //     printf("\n");
-    // }
-    // printf("\n");
-    // printf("\n");
-
     // Return the output
     uint32_t result = 0;
     // int result_idx = ((col+1)%MAX_COL) * W_DATA;
     int result_idx = ((col_cnt+1)%MAX_COL_OUT) * W_DATA;
     
-    int row_start = (1 - col_cnt) * W_DATA;
+    // int row_start = (1 - col_cnt) * W_DATA;
+    int row_start = (MAX_COL_OUT - 1 - col_cnt) * W_DATA;
     int col_start = SA_W - 1 - row_start;
+
+
+    // printf("Row start = (1 - %d) * 4 = %d\n", col_cnt, row_start);
+    // printf("Col start =  %d - 1 - %d = %d\n", SA_W, row_start, col_start);
+
+    // printf("LAY 0: \n");
+    // print_buf_3Dnano((int8_t*)outWaitingMemory[0], SA_W, SA_W);
+    // printf("\nLAY 1: \n");
+    // print_buf_3Dnano((int8_t*)outWaitingMemory[1], SA_W, SA_W);
 
 
     // printf("Ciao\n");
@@ -133,9 +124,18 @@ uint32_t SystolicMatrixMultiplication_3D::inputQueue_3Dnano(int col, uint32_t va
         int row = row_start + (W_DATA-1-i);;
         int col = col_start - (W_DATA-1-i);
 
+        // printf("row = %d\n", row);
+        // printf("col = %d\n", col);
         result |=  mem2d(outWaitingMemory[layer_cnt], SA_W, row, col ) << (8 * (W_DATA - i - 1));
     }
 
+    // printf("RESULT\n");
+    // int8_t *res = (int8_t*)&result; 
+    // for(int j=0; j<W_DATA; j++){
+    //     printf("%d, ", res[j]);
+    // }
+    // printf("\n");
+    // printf("%d\n", result);
 
     return result;
 }
@@ -195,7 +195,7 @@ uint32_t SystolicMatrixMultiplication_3D::streamInOut_3Dnano(uint32_t val, int o
         // Multiply the input to the weight and accumulate to the output
         for (int i= SA_H * SA_W - 1; i >= 0 ; i--){
             
-            // printf("(%d * %d) + %d  \t|  ", inputMemory[i], weights[i], outputMemory[i]);
+            // printf("(%d * %d) + %d  \t|  ", inputMemory[1][i], weights[1][i], outputMemory[1][i]);
             // if(cnt == 3){
             //     printf("\n");
             //     cnt = 0;
@@ -257,6 +257,11 @@ uint32_t SystolicMatrixMultiplication_3D::streamInOut_3Dnano(uint32_t val, int o
     // printf("Reading out_cnt = %d  | col_cnt = %d  | layer_cnt = %d\n", out_cnt, col_cnt, layer_cnt);
 
 
+    // printf("LAY 0: \n");
+    // print_buf_3Dnano((int8_t*)outWaitingMemory[0], SA_W, SA_W);
+    // printf("\nLAY 1: \n");
+    // print_buf_3Dnano((int8_t*)outWaitingMemory[1], SA_W, SA_W);
+
     // Return the output
     uint32_t result = 0;
     for (int i = 0; i < W_DATA; i++) {
@@ -265,8 +270,14 @@ uint32_t SystolicMatrixMultiplication_3D::streamInOut_3Dnano(uint32_t val, int o
 //        std::cout << std::hex << (int) mem2d(outWaitingMemory, KERNEL_DIM, KERNEL_DIM - i - 1, i ) << ",";
     }
 
+    // printf("RESULT\n");
+    // int8_t *res = (int8_t*)&result; 
+    // for(int j=0; j<W_DATA; j++){
+    //     printf("%d, ", res[j]);
+    // }
+    // printf("\n");
+    // printf("%d\n", result);
 
-    
     
     return result;
 

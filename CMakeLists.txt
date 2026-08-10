@@ -11,20 +11,26 @@ set(GCC_COVERAGE_COMPILE_FLAGS
         -DBWMA                  \
         -DREARRANGE             \
         -DSA                    \
-        -DSA_SIZE=4             \
+        -DSA_SIZE=8             \
         -DCORE_NUM=1            \
         -fopenmp                \
                                 \
-        -DRELOAD_WEIGHT         \
+        -DRELOAD_WEIGHT        \
                                 \
         -DNANO_3D               \
         -DN_3D_LAYERS=2         \
-        -DSA_W=4                \
-        -DSA_H=8           \
-        -O2")
+        -DSA_W=8                \
+        -DSA_H=16                \
+        -g      \
+        -O0     \
+        -fno-omit-frame-pointer")
 
+        # -fsanitize=address \
+        # -O2
         # -DNANO_3D               \
         # -DRELOAD_WEIGHT        \
+
+        
 
 
 
@@ -35,6 +41,7 @@ file(GLOB transformer_SRC
         "transformer_layers/*.cc"
         "accelerator/smm_gem.cpp"
         "accelerator/systolic_m2m.cc"
+        "accelerator/systolic_m2m_3D.cc"
         )
 
 add_executable(FvllMontiTransformer transformer.cpp ${transformer_SRC})
