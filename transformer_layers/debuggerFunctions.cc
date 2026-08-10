@@ -168,6 +168,8 @@ void blockWise2Block3Dnano(const uint32_t * blockWise, uint32_t* block3Dnano, in
     printf("==============\n");
     printf("blockRows = %d / %d = %d\n", n_row, SA_H, blockRows);
     printf("blockCols = %d * %d / %d / %d = %d\n", n_col, W_DATA, SA_W, N_3D_LAYERS, blockCols);
+    printf("MAX COL   = %d\n", MAX_COL);
+    printf("MAX COL OUT = %d\n", MAX_COL_OUT);
     printf("blockSize = %d\n", blockSize);
     printf("groupSize = %d\n", groupSize);
 

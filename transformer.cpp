@@ -242,36 +242,28 @@ void test() {
 
     #ifdef NANO_3D
 
-        // printf("\n\n Rearrangeing....\n");
+        printf("\n\n Rearrangeing WEIGHTS Q....\n");
         uint32_t* queryBW3Dnano = new uint32_t [D_MODEL * D_Q >> 2];
-        blockWise2Block3Dnano(query_kernel, queryBW3Dnano, D_MODEL, D_Q >> 2);
+        // blockWise2Block3Dnano(query_kernel, queryBW3Dnano, D_MODEL, D_Q >> 2);
+        blockWise2Block3Dnano_inputs(query_kernel, queryBW3Dnano, D_MODEL, D_Q >> 2);
         query_kernel = queryBW3Dnano;
+        printf("\n\n Rearrangeing WEIGHTS Q DONE....\n");
 
-        // int cnt = 0;
-        // for(int i=0; i<(D_MODEL * D_Q >> 2); i++){
-            
-        //     const int8_t *w = reinterpret_cast<const int8_t *>(&query_kernel[i]);
-        //     printf("[%d]  %d --> ", i, query_kernel[i]);
-        //     for (int k = 0; k < 4; k++) {
-        //         printf("%4d", w[k]);
-        //     }
-        //     printf("\n");
-        //     cnt++;
-        //     if(cnt == 4){
-        //         printf("\n");
-        //         cnt=0;
-        //     }
 
-        // }
-        // printf("\n\n");
-        // exit(0);
-
-        // print_weight_blocks(queryBW3Dnano, D_MODEL, D_Q >> 2);
-        // exit(0);
-
+        printf("\n\n Rearrangeing WEIGHTS K....\n");
         uint32_t* keyBW3Dnano = new uint32_t [D_MODEL * D_Q >> 2];
-        blockWise2Block3Dnano(key_kernel, keyBW3Dnano, D_MODEL, D_Q >> 2);
+        // blockWise2Block3Dnano(key_kernel, keyBW3Dnano, D_MODEL, D_Q >> 2);
+        blockWise2Block3Dnano_inputs(key_kernel, keyBW3Dnano, D_MODEL, D_Q >> 2);
         key_kernel = keyBW3Dnano;
+        printf("\n\n Rearrangeing WEIGHTS K DONE....\n");
+
+
+        printf("\n\n Rearrangeing WEIGHTS V....\n");
+        uint32_t* valueBW3Dnano = new uint32_t [D_MODEL * D_Q >> 2];
+        // blockWise2Block3Dnano(value_kernel, valueBW3Dnano, D_MODEL, D_Q >> 2);
+        blockWise2Block3Dnano_inputs(value_kernel, valueBW3Dnano, D_MODEL, D_Q >> 2);
+        value_kernel = valueBW3Dnano;
+        printf("\n\n Rearrangeing WEIGHTS V DONE....\n");
 
     #endif 
     
