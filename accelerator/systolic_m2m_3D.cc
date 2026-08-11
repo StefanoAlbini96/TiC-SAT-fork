@@ -53,8 +53,11 @@ void print_buf_3Dnano(int8_t *ptr, int height, int width){
 
 
 bool SystolicMatrixMultiplication_3D::loadWeights(int idx, uint32_t val, int layer) {
+    
+    // printf("LOADING idx %d  |  layer = %d\n", idx, layer);
     for (int i=0; i < W_DATA; i++){
         auto currVal = (int8_t)((val >> (8 * (W_DATA -i-1))) & 0xff);
+        // printf("%d\n", currVal);
         weights[layer][idx + i] = currVal;
     }
     if (val!=0)
@@ -129,13 +132,13 @@ uint32_t SystolicMatrixMultiplication_3D::inputQueue_3Dnano(int col, uint32_t va
         result |=  mem2d(outWaitingMemory[layer_cnt], SA_W, row, col ) << (8 * (W_DATA - i - 1));
     }
 
-    // printf("RESULT\n");
+    // printf("RESULT layer [%d], col [%d]\n", layer_cnt, col_start); 
     // int8_t *res = (int8_t*)&result; 
     // for(int j=0; j<W_DATA; j++){
     //     printf("%d, ", res[j]);
     // }
     // printf("\n");
-    // printf("%d\n", result);
+    // printf("%u\n", result);
 
     return result;
 }
@@ -194,9 +197,9 @@ uint32_t SystolicMatrixMultiplication_3D::streamInOut_3Dnano(uint32_t val, int o
         // printf("\n---------------------------------------------------------\n");
         // Multiply the input to the weight and accumulate to the output
         for (int i= SA_H * SA_W - 1; i >= 0 ; i--){
-            
-            // printf("(%d * %d) + %d  \t|  ", inputMemory[1][i], weights[1][i], outputMemory[1][i]);
-            // if(cnt == 3){
+
+            // printf("(%d * %d) + %d  \t|  ", inputMemory[layer][i], weights[layer][i], outputMemory[layer][i]);
+            // if(cnt == (SA_W-1)){
             //     printf("\n");
             //     cnt = 0;
             // } else {
@@ -270,13 +273,13 @@ uint32_t SystolicMatrixMultiplication_3D::streamInOut_3Dnano(uint32_t val, int o
 //        std::cout << std::hex << (int) mem2d(outWaitingMemory, KERNEL_DIM, KERNEL_DIM - i - 1, i ) << ",";
     }
 
-    // printf("RESULT\n");
+    // printf("RESULT layer [%d]\n", layer_cnt);
     // int8_t *res = (int8_t*)&result; 
     // for(int j=0; j<W_DATA; j++){
     //     printf("%d, ", res[j]);
     // }
     // printf("\n");
-    // printf("%d\n", result);
+    // printf("%u\n", result);
 
     
     return result;

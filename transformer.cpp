@@ -246,6 +246,17 @@ void test() {
         uint32_t* queryBW3Dnano = new uint32_t [D_MODEL * D_Q >> 2];
         // blockWise2Block3Dnano(query_kernel, queryBW3Dnano, D_MODEL, D_Q >> 2);
         blockWise2Block3Dnano_inputs(query_kernel, queryBW3Dnano, D_MODEL, D_Q >> 2);
+
+        // for(int i=0; i<D_MODEL * D_Q >> 2; i++){
+        //     printf("[%d] %u\n", i, query_kernel[i]);
+        // }
+        // printf("\n");
+        // for(int i=0; i<D_MODEL * D_Q >> 2; i++){
+        //     printf("[%d] %u\n", i, queryBW3Dnano[i]);
+        // }
+
+        // exit(0);
+
         query_kernel = queryBW3Dnano;
         printf("\n\n Rearrangeing WEIGHTS Q DONE....\n");
 

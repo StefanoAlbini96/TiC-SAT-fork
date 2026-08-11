@@ -56,16 +56,16 @@ void SingleHeadSelfAttn::compute(std::size_t seq_len, uint32_t *input, uint32_t 
     int8_t *res_p_q = (int8_t*)query_layer_out; 
 
 
-    // for(int i=0; i<(D_SEQ * (D_Q / 4)); i++){
-    //     printf("[%d]\t", i);
-    //     std::cout << query_layer_out[i] << " --> ";
-    //     int8_t *res_p_q = (int8_t*)&query_layer_out[i]; 
-    //     for(int j=0; j<4; j++){
-    //         printf("%d, ", res_p_q[j]);
-    //     }
-    //     printf("\n");
-    // }
-    // exit(0);
+    for(int i=0; i<(D_SEQ * (D_Q / 4)); i++){
+        printf("[%d]\t", i);
+        std::cout << query_layer_out[i] << " --> ";
+        int8_t *res_p_q = (int8_t*)&query_layer_out[i]; 
+        for(int j=0; j<4; j++){
+            printf("%d, ", res_p_q[j]);
+        }
+        printf("\n");
+    }
+    exit(0);
 
     printf("Key\n");
     key_layer->compute(seq_len, input, key_layer_out);
@@ -152,30 +152,32 @@ void SingleHeadSelfAttn::compute(std::size_t seq_len, uint32_t *input, uint32_t 
     
 
 
-    // printf("QK \n");
-    // int8_t *res_qk = (int8_t*)attention_scores; 
-    // printf("\n==========================\n");
-    // printf("QK \n LAYER OUT:\n");
+    printf("QK \n");
+    int8_t *res_qk = (int8_t*)attention_scores; 
+    printf("\n==========================\n");
+    printf("QK \n LAYER OUT:\n");
 
 
-    // for(int i=0; i<(pre_seq_len_ * (pre_seq_len_ / 4)); i++){
-    //     printf("[%d]\t", i);
-    //     std::cout << attention_scores[i] << " --> ";
-    //     int8_t *res_qk = (int8_t*)&attention_scores[i]; 
-    //     for(int j=0; j<4; j++){
-    //         printf("%d, ", res_qk[j]);
-    //     }
-    //     printf("\n");
-    // }
-    // printf("\n");
+    for(int i=0; i<(pre_seq_len_ * (pre_seq_len_ / 4)); i++){
+        printf("[%d]\t", i);
+        std::cout << attention_scores[i] << " --> ";
+        int8_t *res_qk = (int8_t*)&attention_scores[i]; 
+        for(int j=0; j<4; j++){
+            printf("%d, ", res_qk[j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
 
 
-    exit(0);
+    // exit(0);
 
 #endif // SIMD
 
 
     softmax->computeRearranged(attention_scores, seq_len, kernel_size_);
+
+    // exit(0);
 
 #ifdef SIMD
     simdComputeBWMA(seq_len, attention_scores, output, value_layer_out, seq_len, head_hidden_size_);
