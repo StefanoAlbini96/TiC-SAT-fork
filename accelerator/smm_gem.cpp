@@ -640,17 +640,17 @@ int col_in_th = output_size_ / KERNEL_DIM /  CORE_NUM;
 
     for (int l2Col = start_index; l2Col < end_index; l2Col++) {
         for (int l2Row = 0; l2Row < input_size_ / KERNEL_DIM; l2Row++) {
-            // Load the kernel with the corresponding weight
+            // // Load the kernel with the corresponding weight
 
-            printf("\n------\nLoop cnt = %d\n", cnt);
-            printf("L2 COL  = %d\n", l2Col);
-            printf("L2 ROW  = %d\n", l2Row);
-            cnt++;
+            // printf("\n------\nLoop cnt = %d\n", cnt);
+            // printf("L2 COL  = %d\n", l2Col);
+            // printf("L2 ROW  = %d\n", l2Row);
+            // cnt++;
 
             for (int i = 0; i < rowBlockSize * colBlockSize; i++) {
                 uint32_t weight = *(weightPtr++);
                 smmParamWrite(i * W_DATA, weight, id);
-                printf("  |  %u  |\n", weight);
+                // printf("  |  %u  |\n", weight);
                 // printf("%d  ", ((int8_t *)(&weight))[0]);
                 // printf("%d  ", ((int8_t *)(&weight))[1]);
                 // printf("%d  ", ((int8_t *)(&weight))[2]);

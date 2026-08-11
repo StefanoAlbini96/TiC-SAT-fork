@@ -18,6 +18,7 @@ class Softmax
         void compute(uint32_t *input, std::size_t seq_len);
         void computeFloat(uint32_t *input, std::size_t seq_len);
         void computeRearranged(uint32_t *input, std::size_t seq_len, std::size_t kernelDim);
+        void computeRearranged_3Dnano(uint32_t *input, std::size_t seq_len, std::size_t kernelDim_h, std::size_t kernelDim_w);
         void post_softmax(uint32_t *input, size_t seq_len, size_t);
     private:
         int32_t float_to_fixed(float value, int32_t fractional_bits);

@@ -38,26 +38,120 @@ void Softmax::compute(uint32_t *input, std::size_t seq_len){
 
 void Softmax::computeRearranged(uint32_t *input, std::size_t seq_len, std::size_t kernelDim) {
     // We assume that the input value are fixed-point with 2 bits of fraction.
+
+
+    // printf("\n\n-----------------------\n");
+    // printf("seq len = %ld\n", seq_len);
+    // printf("J --> %ld / %ld = %ld\n", seq_len, kernelDim, (seq_len / kernelDim));
+    // printf("K --> %ld\n", kernelDim);
+
     for (int i =0; i< seq_len; i++){
+        // printf("-- [%d] --\n", i);
         int32_t sum = 0;
         auto* input_uptr = ((uint8_t*) input) + i * kernelDim;
+
+        // printf("Set inPTR to %d * %ld = %ld\n", i, kernelDim, i * kernelDim);
+
         for (int j =0; j< seq_len / kernelDim; j++){
+            // printf(" --> j = %d\n", j);
+
             for (int k=0; k< kernelDim; k++) {
+                // printf("+ %d\n", k);
                 *(input_uptr+k) = lookup[(* (uint8_t *) (input_uptr+ k)) >> 3]; // divide by the sqrt od the d_q which is sqrt(64) -> 8
                 sum += *(input_uptr+k);
             }
             input_uptr += seq_len* kernelDim;
+            // printf("\nUpdate inPTR by %ld\n", seq_len * kernelDim);
         }
         sum = (sum==0) ? sum + 1 : sum;
         input_uptr = ((uint8_t*) input) + i * kernelDim;
+
+        // // REMOVE
+        // if ((sum >> 8) == 0){
+        //     sum = (sum << 8) +1;
+        // }
+        
+        // printf("Set AGAIN inPTR to %d * %ld = %ld\n", i, kernelDim, i * kernelDim);
+
         for (int j =0; j< seq_len / kernelDim; j++){
             for (int k=0; k< kernelDim; k++) {
+                // printf("++ %d %d\n", j, k);
                 *(input_uptr+k) = (uint8_t) ((*(input_uptr+k)) /(sum >> 8));
             }
             input_uptr += seq_len* kernelDim;
         }
     }
 }
+
+
+
+
+
+
+
+
+
+void Softmax::computeRearranged_3Dnano(uint32_t *input, std::size_t seq_len, std::size_t kernelDim_h, std::size_t kernelDim_w) {
+    // We assume that the input value are fixed-point with 2 bits of fraction.
+
+
+    // printf("\n\n----------3D NANO-------------\n");
+    // printf("seq len = %ld\n", seq_len);
+    // printf("J --> %ld / %ld = %ld\n", seq_len, kernelDim_h, (seq_len / kernelDim_h));
+    // printf("K --> %ld\n", kernelDim_h);
+
+
+
+    for (int r = 0; r < seq_len; r++){
+        // printf("\n-- [%d] --\n", r);
+        int32_t sum = 0;
+        auto* input_uptr = ((uint8_t*) input) + r * kernelDim_h;
+        // printf("Set inPTR to %d * %ld = %ld\n", r, kernelDim_h, r * kernelDim_h);
+
+
+        // for (int j =0; j< (seq_len / kernelDim_w) * N_3D_LAYERS; j++){
+        for (int j =0; j< (seq_len / kernelDim_h); j++){
+            // printf(" --> j = %d\n", j);
+
+            for (int k=0; k< kernelDim_h; k++) {
+                // printf("+ %d\n", k);
+                *(input_uptr+k) = lookup[(* (uint8_t *) (input_uptr+ k)) >> 3]; // divide by the sqrt od the d_q which is sqrt(64) -> 8
+                sum += *(input_uptr+k);
+            }
+            input_uptr += seq_len* kernelDim_h;
+            // printf("\nUpdate inPTR by %ld\n", seq_len * kernelDim_h);
+
+        }
+        sum = (sum==0) ? sum + 1 : sum;
+        input_uptr = ((uint8_t*) input) + r * kernelDim_h;
+
+        // // REMOVE
+        // if ((sum >> 8) == 0){
+        //     sum = (sum << 8) +1;
+        // }
+        
+        // printf("Set AGAIN inPTR to %d * %ld = %ld\n", i, kernelDim, i * kernelDim);
+
+        for (int j = 0; j < (seq_len / kernelDim_h); j++){
+            for (int k=0; k< kernelDim_h; k++) {
+                // printf("++ %d %d\n", j, k);
+                *(input_uptr+k) = (uint8_t) ((*(input_uptr+k)) /(sum >> 8));
+            }
+            input_uptr += seq_len* kernelDim_h;
+        }
+
+
+    }
+}
+
+
+
+
+
+
+
+
+
 
 void Softmax::post_softmax(uint32_t *input, std::size_t seq_len, std::size_t headSize){
     auto* input_ptr = (int8_t*) input;
