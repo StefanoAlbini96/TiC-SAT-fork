@@ -338,8 +338,8 @@ int col_blocks_in_3DStack = output_size_ / SA_W / N_3D_LAYERS;
 
         for (int l2Row_3D_block = 0; l2Row_3D_block < row_blocks_in_3DStack; l2Row_3D_block++){
 
-            printf("\nl2Col_3D_block  = %d\n", l2Col_3D_block);
-            printf("l2Row_3D_block  = %d\n", l2Row_3D_block);
+            // printf("\nl2Col_3D_block  = %d\n", l2Col_3D_block);
+            // printf("l2Row_3D_block  = %d\n", l2Row_3D_block);
 
             // // For each 3D layer, write a block of weights into the SA
             // for (int layer = 0; layer < N_3D_LAYERS; layer++){
@@ -356,7 +356,7 @@ int col_blocks_in_3DStack = output_size_ / SA_W / N_3D_LAYERS;
                 for (int layer = 0; layer < N_3D_LAYERS; layer++){
                     uint32_t weight = *(weightPtr++);
                     smmParamWrite_3Dnano(i * W_DATA, weight, layer);
-                    printf("  |  %d  |\n", weight);
+                    // printf("  |  %d  |\n", weight);
                 }
             }
 
@@ -574,18 +574,18 @@ int col_in_th = output_size_ / KERNEL_DIM /  CORE_NUM;
 // int col_in_th = output_size_ / KERNEL_DIM /  N_3D_LAYERS;
 // for(int id=0; id<N_3D_LAYERS; id++){
 
-    // printf("\nSMM compute BWMA\n");
-    // printf("====================\n");
-    // printf("Seq len   = \t %ld\n", seq_len);
-    // printf("In size   = \t %ld\n", input_size_);
-    // printf("Out size  = \t %ld\n", output_size_);
-    // printf("KERN DIM  = \t %d\n", KERNEL_DIM);
-    // printf("W DATA    = \t %d\n", W_DATA);
-    // printf("MAX COL   = \t %d\n", MAX_COL);
-    // printf("Row block = \t %d\n", rowBlockSize);
-    // printf("Col block = \t %d\n", colBlockSize);
-    // printf("Col in TH = \t %d\n", col_in_th);
-    // printf("====================\n");
+    printf("\nSMM compute BWMA\n");
+    printf("====================\n");
+    printf("Seq len   = \t %ld\n", seq_len);
+    printf("In size   = \t %ld\n", input_size_);
+    printf("Out size  = \t %ld\n", output_size_);
+    printf("KERN DIM  = \t %d\n", KERNEL_DIM);
+    printf("W DATA    = \t %d\n", W_DATA);
+    printf("MAX COL   = \t %d\n", MAX_COL);
+    printf("Row block = \t %d\n", rowBlockSize);
+    printf("Col block = \t %d\n", colBlockSize);
+    printf("Col in TH = \t %d\n", col_in_th);
+    printf("====================\n");
 
     int cnt = 0;
 
@@ -603,15 +603,15 @@ int col_in_th = output_size_ / KERNEL_DIM /  CORE_NUM;
         for (int l2Row = 0; l2Row < input_size_ / KERNEL_DIM; l2Row++) {
             // Load the kernel with the corresponding weight
 
-            printf("\n------\nLoop cnt = %d\n", cnt);
-            printf("L2 COL  = %d\n", l2Col);
-            printf("L2 ROW  = %d\n", l2Row);
-            cnt++;
+            // printf("\n------\nLoop cnt = %d\n", cnt);
+            // printf("L2 COL  = %d\n", l2Col);
+            // printf("L2 ROW  = %d\n", l2Row);
+            // cnt++;
 
             for (int i = 0; i < rowBlockSize * colBlockSize; i++) {
                 uint32_t weight = *(weightPtr++);
                 smmParamWrite(i * W_DATA, weight, id);
-                printf("  |  %d  |\n", weight);
+                // printf("  |  %d  |\n", weight);
                 // printf("%d  ", ((int8_t *)(&weight))[0]);
                 // printf("%d  ", ((int8_t *)(&weight))[1]);
                 // printf("%d  ", ((int8_t *)(&weight))[2]);

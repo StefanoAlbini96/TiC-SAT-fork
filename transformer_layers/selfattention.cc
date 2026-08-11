@@ -5,6 +5,9 @@
 //#include <cstdint>
 #include "debuggerFunctions.h"
 
+
+#define W_DATA 4
+
 SingleHeadSelfAttn::SingleHeadSelfAttn(std::size_t pre_seq_len, std::size_t input_dim, std::size_t head_hidden_size,
                                        uint32_t **weightVector, std::size_t kernel_dim, std::size_t max_col) {
 
@@ -51,75 +54,124 @@ void SingleHeadSelfAttn::compute(std::size_t seq_len, uint32_t *input, uint32_t 
     printf("\n==========================\n");
     printf("QUERY LAYER OUT:\n");
     int8_t *res_p_q = (int8_t*)query_layer_out; 
-    // std::cout << static_cast<int>(res_p_q[0]) << std::endl;
-    // std::cout << static_cast<int>(res_p_q[1]) << std::endl;
-    // std::cout << static_cast<int>(res_p_q[2]) << std::endl;
-    // std::cout << static_cast<int>(res_p_q[3]) << std::endl;
 
-    // printf("outPtr = %p\n", (void*)query_layer_out);
 
-    for(int i=0; i<(D_SEQ * (D_Q / 4)); i++){
-        printf("[%d]\t", i);
-        std::cout << query_layer_out[i] << " --> ";
-        int8_t *res_p_q = (int8_t*)&query_layer_out[i]; 
-        for(int j=0; j<4; j++){
-            printf("%d, ", res_p_q[j]);
-        }
-        printf("\n");
-    }
+    // for(int i=0; i<(D_SEQ * (D_Q / 4)); i++){
+    //     printf("[%d]\t", i);
+    //     std::cout << query_layer_out[i] << " --> ";
+    //     int8_t *res_p_q = (int8_t*)&query_layer_out[i]; 
+    //     for(int j=0; j<4; j++){
+    //         printf("%d, ", res_p_q[j]);
+    //     }
+    //     printf("\n");
+    // }
     // exit(0);
-
-
-    // std::cout << query_layer_out[0] << std::endl;
-    // std::cout << query_layer_out[1] << std::endl;
-    // std::cout << query_layer_out[2] << std::endl;
-    // std::cout << query_layer_out[3] << std::endl << std::endl;
-
-    // std::cout << query_layer_out[4] << std::endl;
-    // std::cout << query_layer_out[5] << std::endl;
-    // std::cout << query_layer_out[6] << std::endl;
-    // std::cout << query_layer_out[7] << std::endl << std::endl;
-
-    // std::cout << query_layer_out[8] << std::endl;
-    // std::cout << query_layer_out[9] << std::endl;
-    // std::cout << query_layer_out[10] << std::endl;
-    // std::cout << query_layer_out[11] << std::endl << std::endl;
-
-    // std::cout << query_layer_out[12] << std::endl;
-    // std::cout << query_layer_out[13] << std::endl;
-    // std::cout << query_layer_out[14] << std::endl;
-    // std::cout << query_layer_out[15] << std::endl << std::endl;
-    exit(0);
 
     printf("Key\n");
     key_layer->compute(seq_len, input, key_layer_out);
     int8_t *res_p_k = (int8_t*)key_layer_out; 
-    std::cout << static_cast<int>(res_p_k[0]) << std::endl;
-    std::cout << static_cast<int>(res_p_k[1]) << std::endl;
-    std::cout << static_cast<int>(res_p_k[2]) << std::endl;
-    std::cout << static_cast<int>(res_p_k[3]) << std::endl;
-    std::cout << static_cast<int>(res_p_k[4]) << std::endl;
-    std::cout << static_cast<int>(res_p_k[5]) << std::endl;
-    std::cout << static_cast<int>(res_p_k[6]) << std::endl;
-    std::cout << static_cast<int>(res_p_k[7]) << std::endl;
+    printf("\n==========================\n");
+    printf("KEY LAYER OUT:\n");
 
-    exit(0);
 
-    printf("Value\n");
-    value_layer->compute(seq_len, input, value_layer_out);
+    // for(int i=0; i<(D_SEQ * (D_Q / 4)); i++){
+    //     printf("[%d]\t", i);
+    //     std::cout << key_layer_out[i] << " --> ";
+    //     int8_t *res_p_q = (int8_t*)&key_layer_out[i]; 
+    //     for(int j=0; j<4; j++){
+    //         printf("%d, ", res_p_q[j]);
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
+
+    // exit(0);
+
+    // printf("Value\n");
+    // value_layer->compute(seq_len, input, value_layer_out);
+    // printf("\n==========================\n");
+    // printf("VALUE LAYER OUT:\n");
+
+    // for(int i=0; i<(D_SEQ * (D_Q / 4)); i++){
+    //     printf("[%d]\t", i);
+    //     std::cout << value_layer_out[i] << " --> ";
+    //     int8_t *res_p_q = (int8_t*)&value_layer_out[i]; 
+    //     for(int j=0; j<4; j++){
+    //         printf("%d, ", res_p_q[j]);
+    //     }
+    //     printf("\n");
+    // }
+
+    // exit(0);
 
 
 #ifdef BWMA
+
+    // printf("Key layer out:\n");
+    // for(int i=0; i<(pre_seq_len_ * head_hidden_size_ >> 2); i++){
+    //     printf("[%d]\t", i);
+    //     std::cout << key_layer_out[i] << " --> ";
+    //     int8_t *res_p_q = (int8_t*)&key_layer_out[i]; 
+    //     for(int j=0; j<4; j++){
+    //         printf("%d, ", res_p_q[j]);
+    //     }
+    //     printf("\n");
+    // }
+
     std::cout << "BWMA method" << std::endl;
+
+    #ifdef NANO_3D
+    printf("3D nano\n");
+    Transpose::transpose_rearranged_3Dnano(key_layer_out, key_transposed_layer_out, head_hidden_size_,
+                                    pre_seq_len_, SA_H, SA_W, W_DATA, max_col_);
+    #else
     Transpose::transpose_rearranged(key_layer_out, key_transposed_layer_out, head_hidden_size_,
                                     pre_seq_len_, kernel_size_, max_col_);
+    #endif
+
+
+    // printf("\nKey TRANSPOSED layer out:\n");
+    // for(int i=0; i<(pre_seq_len_ * head_hidden_size_ >> 2); i++){
+    //     printf("[%d]\t", i);
+    //     std::cout << key_transposed_layer_out[i] << std::endl;
+    // }
+
 
 #ifdef SIMD
     simdComputeBWMA(seq_len, query_layer_out, attention_scores, key_transposed_layer_out,
                           head_hidden_size_, seq_len);
 #else
-    smmComputeBWMA(seq_len, query_layer_out, attention_scores, key_transposed_layer_out, head_hidden_size_,
-                   seq_len);
+
+    #ifdef NANO_3D
+        smmComputeBWMA_3DLayers(seq_len, query_layer_out, attention_scores, key_transposed_layer_out, head_hidden_size_,
+                        seq_len);
+    #else
+        smmComputeBWMA(seq_len, query_layer_out, attention_scores, key_transposed_layer_out, head_hidden_size_,
+                    seq_len);
+    #endif
+    
+
+
+    // printf("QK \n");
+    // int8_t *res_qk = (int8_t*)attention_scores; 
+    // printf("\n==========================\n");
+    // printf("QK \n LAYER OUT:\n");
+
+
+    // for(int i=0; i<(pre_seq_len_ * (pre_seq_len_ / 4)); i++){
+    //     printf("[%d]\t", i);
+    //     std::cout << attention_scores[i] << " --> ";
+    //     int8_t *res_qk = (int8_t*)&attention_scores[i]; 
+    //     for(int j=0; j<4; j++){
+    //         printf("%d, ", res_qk[j]);
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
+
+
+    exit(0);
+
 #endif // SIMD
 
 
