@@ -46,8 +46,16 @@ void AddNormalize::compute(uint32_t *input, uint32_t *output) {
 
 
 void AddNormalize::computeRearranged(uint32_t *input, uint32_t *output) {
+
+
+    // printf("\n=================\n");
+    // printf("SEQ LEN = %ld\n", seq_len_);
+    // printf("input_dim_ = %ld\n", input_dim_);
+    // printf("J = 0 .... %ld / %ld = %ld\n", input_dim_, kernel_dim_, input_dim_ / kernel_dim_);
+
     auto* input_ptr = (int8_t*) (input );
     auto* output_ptr = (int8_t*) (output);
+
     for (int i =0; i< seq_len_* input_dim_; i++){
         *output_ptr = (int8_t) (*output_ptr + *input_ptr);
         output_ptr ++;
@@ -55,6 +63,10 @@ void AddNormalize::computeRearranged(uint32_t *input, uint32_t *output) {
     }
 
     for (int i=0; i< seq_len_; i++){
+        
+        // printf("\n--- [%d] ---\n", i);
+        // printf("Update outPtr += %d\n", (i*kernel_dim_));
+
         output_ptr = ((int8_t*) output) + i*kernel_dim_;
         int sum = 0;
         for (int j =0; j< input_dim_ / kernel_dim_; j++){
@@ -84,6 +96,66 @@ void AddNormalize::computeRearranged(uint32_t *input, uint32_t *output) {
                 *(output_ptr+k) = (int8_t) ((*(output_ptr+k) - mean) * (sd_inv) >> 2);
             }
             output_ptr += seq_len_* kernel_dim_;
+        }
+    }
+}
+
+
+
+
+
+
+void AddNormalize::computeRearranged_3Dnano(uint32_t *input, uint32_t *output, std::size_t kernelDim_h, std::size_t kernelDim_w) {
+
+
+    printf("\n=================\n");
+    printf("SEQ LEN = %ld\n", seq_len_);
+    printf("input_dim_ = %ld\n", input_dim_);
+    printf("J = 0 .... %ld / %ld = %ld\n", input_dim_, kernel_dim_, input_dim_ / kernel_dim_);
+
+    auto* input_ptr = (int8_t*) (input );
+    auto* output_ptr = (int8_t*) (output);
+
+    for (int i =0; i< seq_len_* input_dim_; i++){
+        *output_ptr = (int8_t) (*output_ptr + *input_ptr);
+        output_ptr ++;
+        input_ptr ++;
+    }
+
+    for (int i=0; i< seq_len_; i++){
+        
+        // printf("\n--- [%d] ---\n", i);
+        // printf("Update outPtr += %d\n", (i*kernelDim_h));
+
+        output_ptr = ((int8_t*) output) + i*kernelDim_h;
+        int sum = 0;
+        for (int j =0; j< input_dim_ / kernelDim_h; j++){
+            for (int k=0; k< kernelDim_h; k++) {
+                sum += *(output_ptr+k);
+            }
+            output_ptr += seq_len_* kernelDim_h;
+        }
+
+        auto mean = (int32_t) (sum / input_dim_);
+        int32_t variance = 0;
+        output_ptr = (int8_t*) output + i*kernelDim_h;
+        for (int j =0; j< input_dim_ / kernelDim_h; j++){
+            for (int k=0; k< kernelDim_h; k++) {
+                variance+= (*(output_ptr+k) - mean) ^ 2; // Assuming that the values are fixed-point with 2 digit of fraction.
+            }
+            output_ptr += seq_len_* kernelDim_h;
+        }
+
+        variance = variance / (int) input_dim_;
+        double sd = sqrt((double) variance);
+        auto sd_inv = (int32_t) ((1<<2)/(sd + 1)); // prevent zero divide! // Assuming that the values are fixed-point with 2 digit of fraction.
+
+        output_ptr = (int8_t*) output + i*kernelDim_h;
+        for (int j =0; j< input_dim_ / kernelDim_h; j++){
+            for (int k=0; k< kernelDim_h; k++) {
+                *(output_ptr+k) = (int8_t) ((*(output_ptr+k) - mean) * (sd_inv) >> 2);
+            }
+            output_ptr += seq_len_* kernelDim_h;
         }
     }
 }

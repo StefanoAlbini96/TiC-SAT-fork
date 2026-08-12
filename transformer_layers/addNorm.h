@@ -11,6 +11,7 @@ public:
     AddNormalize(std::size_t, std::size_t, std::size_t, std::size_t);
     void compute(uint32_t *input, uint32_t *output);
     void computeRearranged(uint32_t *input, uint32_t *output);
+    void computeRearranged_3Dnano(uint32_t *input, uint32_t *output, std::size_t kernelDim_h, std::size_t kernelDim_w);
 private:
     std::size_t seq_len_;
     std::size_t input_dim_;

@@ -323,16 +323,41 @@ void test() {
     uint32_t* ff1RowWise = new uint32_t [D_FF * D_MODEL >> 2];
     blockWise2RowWise(ff1_kernel, ff1RowWise, D_FF, D_MODEL >> 2);
     ff1_kernel = ff1RowWise;
+
+#else
+
+    #ifdef NANO_3D
+
+        printf("\n\n Rearrangeing WEIGHTS CONDENSE....\n");
+        uint32_t* condenseKernleBW3Dnano = new uint32_t [NUM_HEAD * D_Q * D_MODEL >> 2];
+        blockWise2Block3Dnano_inputs(condense_kernel, condenseKernleBW3Dnano, NUM_HEAD * D_Q, D_MODEL >> 2);
+        condense_kernel = condenseKernleBW3Dnano;
+
+        printf("\n\n Rearrangeing FF0....\n");
+        uint32_t* ff0KernleBW3Dnano = new uint32_t [D_MODEL * D_FF >> 2];
+        blockWise2Block3Dnano_inputs(ff0_kernel, ff0KernleBW3Dnano, D_MODEL, D_FF >> 2);
+        ff0_kernel = ff0KernleBW3Dnano;
+        
+        printf("\n\n Rearrangeing FF1....\n");
+        uint32_t* ff1KernleBW3Dnano = new uint32_t [D_MODEL * D_FF >> 2];
+        blockWise2Block3Dnano_inputs(ff1_kernel, ff1KernleBW3Dnano, D_MODEL, D_FF >> 2);
+        ff1_kernel = ff1KernleBW3Dnano;
+
+    #endif
+
+
+
 #endif
 
     weightVec[NUM_HEAD * 3] = condense_kernel;
     weightVec[NUM_HEAD * 3 + 1] = ff0_kernel;
     weightVec[NUM_HEAD * 3 + 2] = ff1_kernel;
 
+    printf("OUUUUT = %d\n", D_Q);
     TransformerBlock selfatten(D_SEQ, D_MODEL, D_Q, NUM_HEAD, D_FF, weightVec, KERNEL_DIM, MAX_COL);
     selfatten.compute(D_SEQ, tensor_in, out);
 
-    // printf("%d\n", out[0]);
+    printf("%u\n", out[0]);
 }
 
 int main() {

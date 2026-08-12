@@ -42,8 +42,37 @@ void TransformerBlock::compute(std::size_t seq_len, uint32_t *input, uint32_t *o
         std::cout << "\n ------- Computing Head : " << n << std::endl;
         selfatten[n]->compute(seq_len, input, multihead_out + n * (seq_len * head_hidden_size_ >> 2));
 
+        
+        // printf("\n SELF ATT\n");
+        // printf("%d x %d\n", seq_len, head_hidden_size_ >> 2);
+        // printf("==============\n");
+        // for(int i=0; i<(seq_len * (head_hidden_size_ / 4)); i++){
+        //     printf("[%d]\t", i);
+        //     std::cout << multihead_out[i] << " --> ";
+        //     int8_t *res_qk = (int8_t*)&multihead_out[i]; 
+        //     for(int j=0; j<4; j++){
+        //         printf("%d, ", res_qk[j]);
+        //     }
+        //     printf("\n");
+        // }
+        // printf("\n");
         // exit(0);
     }
+
+    // printf("\n SELF ATT\n");
+    // printf("%d x (%d x %d)\n", num_heads_, seq_len, head_hidden_size_ >> 2);
+    // printf("==============\n");
+    // for(int i=0; i<(num_heads_ * seq_len * (head_hidden_size_ / 4)); i++){
+    //     printf("[%d]\t", i);
+    //     std::cout << multihead_out[i] << " --> ";
+    //     int8_t *res_qk = (int8_t*)&multihead_out[i]; 
+    //     for(int j=0; j<4; j++){
+    //         printf("%d, ", res_qk[j]);
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
+    // exit(0);
 
 #ifndef BWMA
     Transpose::multihead_transpose(multihead_out, multihead_out_reshape,
@@ -51,13 +80,50 @@ void TransformerBlock::compute(std::size_t seq_len, uint32_t *input, uint32_t *o
     multihead_out = multihead_out_reshape;
 #endif
 
-    std::cout << "Condense"  << std::endl;
+    std::cout << "\nCondense"  << std::endl;
     condense->compute(seq_len, multihead_out, condense_out);
 
 
+    // printf("\n CONDENSE\n");
+    // printf("(%ld x %ld)\n", seq_len, input_dim_ >> 2);
+    // printf("==============\n");
+    // for(int i=0; i<(seq_len * input_dim_ >> 2); i++){
+    //     printf("[%d]\t", i);
+    //     std::cout << multihead_out[i] << " --> ";
+    //     int8_t *res_qk = (int8_t*)&multihead_out[i]; 
+    //     for(int j=0; j<4; j++){
+    //         printf("%d, ", res_qk[j]);
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
+    // exit(0);
+
     std::cout << "Add Norm"  << std::endl;
 #ifdef BWMA
-    addNorm->computeRearranged(input, condense_out);
+
+    #ifdef NANO_3D
+        addNorm->computeRearranged_3Dnano(input, condense_out, SA_H, SA_W);
+    #else
+        addNorm->computeRearranged(input, condense_out);
+    #endif
+
+
+    printf("\n CONDENSE\n");
+    printf("(%ld x %ld)\n", seq_len, input_dim_ >> 2);
+    printf("==============\n");
+    for(int i=0; i<(seq_len * input_dim_ >> 2); i++){
+        printf("[%d]\t", i);
+        std::cout << condense_out[i] << " --> ";
+        int8_t *res_qk = (int8_t*)&condense_out[i]; 
+        for(int j=0; j<4; j++){
+            printf("%d, ", res_qk[j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+    exit(0);
+
 #else
     addNorm->compute(input, condense_out);
 #endif
@@ -71,8 +137,34 @@ void TransformerBlock::compute(std::size_t seq_len, uint32_t *input, uint32_t *o
     feedForward1->compute(seq_len, intermediateFF, output);
 
     std::cout << "Add Norm"  << std::endl;
+
 #ifdef BWMA
-    addNorm->computeRearranged(condense_out, output);
+
+    #ifdef NANO_3D
+        addNorm->computeRearranged_3Dnano(condense_out, output, SA_H, SA_W);
+    #else
+        addNorm->computeRearranged(condense_out, output);
+    #endif
+
+
+
+    // printf("\n ADD NORM FINAL\n");
+    // printf("(%ld x %ld)\n", seq_len, input_dim_ >> 2);
+    // printf("==============\n");
+    // for(int i=0; i<(seq_len * input_dim_ >> 2); i++){
+    //     printf("[%d]\t", i);
+    //     std::cout << multihead_out[i] << " --> ";
+    //     int8_t *res_qk = (int8_t*)&multihead_out[i]; 
+    //     for(int j=0; j<4; j++){
+    //         printf("%d, ", res_qk[j]);
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
+    // exit(0);
+
+
+
 #else
     addNorm->compute(condense_out, output);
 #endif
