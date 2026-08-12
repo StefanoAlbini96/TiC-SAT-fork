@@ -339,8 +339,8 @@ void test() {
         ff0_kernel = ff0KernleBW3Dnano;
         
         printf("\n\n Rearrangeing FF1....\n");
-        uint32_t* ff1KernleBW3Dnano = new uint32_t [D_MODEL * D_FF >> 2];
-        blockWise2Block3Dnano_inputs(ff1_kernel, ff1KernleBW3Dnano, D_MODEL, D_FF >> 2);
+        uint32_t* ff1KernleBW3Dnano = new uint32_t [D_FF * D_MODEL >> 2];
+        blockWise2Block3Dnano_inputs(ff1_kernel, ff1KernleBW3Dnano, D_FF, D_MODEL >> 2);
         ff1_kernel = ff1KernleBW3Dnano;
 
     #endif
@@ -353,11 +353,29 @@ void test() {
     weightVec[NUM_HEAD * 3 + 1] = ff0_kernel;
     weightVec[NUM_HEAD * 3 + 2] = ff1_kernel;
 
-    printf("OUUUUT = %d\n", D_Q);
     TransformerBlock selfatten(D_SEQ, D_MODEL, D_Q, NUM_HEAD, D_FF, weightVec, KERNEL_DIM, MAX_COL);
     selfatten.compute(D_SEQ, tensor_in, out);
 
-    printf("%u\n", out[0]);
+    // printf("%u\n", out[0]);
+
+
+
+    printf("\n OUTPUT\n");
+    printf("(%ld x %ld)\n", D_SEQ, D_MODEL >> 2);
+    printf("==============\n");
+    for(int i=0; i<(D_SEQ * D_MODEL >> 2); i++){
+        printf("[%d]\t", i);
+        std::cout << out[i] << " --> ";
+        int8_t *res_qk = (int8_t*)&out[i]; 
+        for(int j=0; j<4; j++){
+            printf("%d, ", res_qk[j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+
+
+
 }
 
 int main() {
