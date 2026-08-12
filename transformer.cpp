@@ -157,24 +157,11 @@ void test() {
 #else
     #ifdef NANO_3D
 
-
-        // printf("--> %d\n", tensor_in[0]);
-        // printf("--> %d\n", tensor_in[1]);
-        // printf("--> %d\n", tensor_in[8]);
-
-        printf("\n\n Rearrangeing INPUTS....\n");
+        // printf("\n\n Rearrangeing INPUTS....\n");
         uint32_t tensorIn3Dnano[D_SEQ * D_MODEL >> 2];
         blockWise2Block3Dnano_inputs(tensor_in, tensorIn3Dnano, D_SEQ, D_MODEL >> 2);
         tensor_in = tensorIn3Dnano;
-        printf("Rearrangeing COMPLETED....\n");
-
-        // exit(0);
-
-        // printf("--> %d\n", tensor_in[0]);
-        // printf("--> %d\n", tensor_in[1]);
-
-        // print_weight_blocks(tensorIn3Dnano, D_SEQ, D_Q >> 2);
-        // exit(0);
+        // printf("Rearrangeing COMPLETED....\n");
 
     #endif
 #endif
@@ -184,7 +171,7 @@ void test() {
     int head_qkv_size = D_Q * D_MODEL >> 2;
 
     for (int n = 0; n < NUM_HEAD; n++) {
-        printf("\nWEIGHTS FOR HEAD [%d]\n", n);
+        // printf("\nWEIGHTS FOR HEAD [%d]\n", n);
         volatile auto query_kernel = new uint32_t[D_Q * D_MODEL >> 2]();
         volatile auto key_kernel = new uint32_t[D_Q * D_MODEL >> 2]();
         volatile auto value_kernel = new uint32_t[D_Q * D_MODEL >> 2]();
@@ -198,24 +185,6 @@ void test() {
 
         int cnt = 0;
         fill_weight(query_kernel, D_MODEL, D_Q >> 2);
-        // for(int i=0; i<(D_MODEL * D_Q >> 2); i++){
-            
-        //     const int8_t *w = reinterpret_cast<const int8_t *>(&query_kernel[i]);
-        //     printf("[%d]  %d --> ", i, query_kernel[i]);
-        //     for (int k = 0; k < 4; k++) {
-        //         printf("%4d", w[k]);
-        //     }
-        //     printf("\n");
-        //     cnt++;
-        //     if(cnt == 4){
-        //         printf("\n");
-        //         cnt=0;
-        //     }
-
-        // }
-        // printf("\n\n");
-        // exit(0);
-
         fill_weight(key_kernel, D_MODEL, D_Q >> 2);
         fill_weight(value_kernel,  D_MODEL, D_Q >> 2);
 
@@ -242,39 +211,28 @@ void test() {
 
     #ifdef NANO_3D
 
-        printf("\n\n Rearrangeing WEIGHTS Q....\n");
+        // printf("\n\n Rearrangeing WEIGHTS Q....\n");
         uint32_t* queryBW3Dnano = new uint32_t [D_MODEL * D_Q >> 2];
         // blockWise2Block3Dnano(query_kernel, queryBW3Dnano, D_MODEL, D_Q >> 2);
         blockWise2Block3Dnano_inputs(query_kernel, queryBW3Dnano, D_MODEL, D_Q >> 2);
-
-        // for(int i=0; i<D_MODEL * D_Q >> 2; i++){
-        //     printf("[%d] %u\n", i, query_kernel[i]);
-        // }
-        // printf("\n");
-        // for(int i=0; i<D_MODEL * D_Q >> 2; i++){
-        //     printf("[%d] %u\n", i, queryBW3Dnano[i]);
-        // }
-
-        // exit(0);
-
         query_kernel = queryBW3Dnano;
-        printf("\n\n Rearrangeing WEIGHTS Q DONE....\n");
+        // printf("\n\n Rearrangeing WEIGHTS Q DONE....\n");
 
 
-        printf("\n\n Rearrangeing WEIGHTS K....\n");
+        // printf("\n\n Rearrangeing WEIGHTS K....\n");
         uint32_t* keyBW3Dnano = new uint32_t [D_MODEL * D_Q >> 2];
         // blockWise2Block3Dnano(key_kernel, keyBW3Dnano, D_MODEL, D_Q >> 2);
         blockWise2Block3Dnano_inputs(key_kernel, keyBW3Dnano, D_MODEL, D_Q >> 2);
         key_kernel = keyBW3Dnano;
-        printf("\n\n Rearrangeing WEIGHTS K DONE....\n");
+        // printf("\n\n Rearrangeing WEIGHTS K DONE....\n");
 
 
-        printf("\n\n Rearrangeing WEIGHTS V....\n");
+        // printf("\n\n Rearrangeing WEIGHTS V....\n");
         uint32_t* valueBW3Dnano = new uint32_t [D_MODEL * D_Q >> 2];
         // blockWise2Block3Dnano(value_kernel, valueBW3Dnano, D_MODEL, D_Q >> 2);
         blockWise2Block3Dnano_inputs(value_kernel, valueBW3Dnano, D_MODEL, D_Q >> 2);
         value_kernel = valueBW3Dnano;
-        printf("\n\n Rearrangeing WEIGHTS V DONE....\n");
+        // printf("\n\n Rearrangeing WEIGHTS V DONE....\n");
 
     #endif 
     
@@ -283,8 +241,6 @@ void test() {
         // print_weight_blocks(query_kernel, D_MODEL, D_Q >> 2);
 
 // exit(0);
-
-        printf("STORING Q ptr at index %d\n", n*3);
         weightVec[n * 3] = query_kernel;
         weightVec[n * 3 + 1] = key_kernel;
         weightVec[n * 3 + 2] = value_kernel;
@@ -328,17 +284,17 @@ void test() {
 
     #ifdef NANO_3D
 
-        printf("\n\n Rearrangeing WEIGHTS CONDENSE....\n");
+        // printf("\n\n Rearrangeing WEIGHTS CONDENSE....\n");
         uint32_t* condenseKernleBW3Dnano = new uint32_t [NUM_HEAD * D_Q * D_MODEL >> 2];
         blockWise2Block3Dnano_inputs(condense_kernel, condenseKernleBW3Dnano, NUM_HEAD * D_Q, D_MODEL >> 2);
         condense_kernel = condenseKernleBW3Dnano;
 
-        printf("\n\n Rearrangeing FF0....\n");
+        // printf("\n\n Rearrangeing FF0....\n");
         uint32_t* ff0KernleBW3Dnano = new uint32_t [D_MODEL * D_FF >> 2];
         blockWise2Block3Dnano_inputs(ff0_kernel, ff0KernleBW3Dnano, D_MODEL, D_FF >> 2);
         ff0_kernel = ff0KernleBW3Dnano;
         
-        printf("\n\n Rearrangeing FF1....\n");
+        // printf("\n\n Rearrangeing FF1....\n");
         uint32_t* ff1KernleBW3Dnano = new uint32_t [D_FF * D_MODEL >> 2];
         blockWise2Block3Dnano_inputs(ff1_kernel, ff1KernleBW3Dnano, D_FF, D_MODEL >> 2);
         ff1_kernel = ff1KernleBW3Dnano;
@@ -360,19 +316,19 @@ void test() {
 
 
 
-    printf("\n OUTPUT\n");
-    printf("(%ld x %ld)\n", D_SEQ, D_MODEL >> 2);
-    printf("==============\n");
-    for(int i=0; i<(D_SEQ * D_MODEL >> 2); i++){
-        printf("[%d]\t", i);
-        std::cout << out[i] << " --> ";
-        int8_t *res_qk = (int8_t*)&out[i]; 
-        for(int j=0; j<4; j++){
-            printf("%d, ", res_qk[j]);
-        }
-        printf("\n");
-    }
-    printf("\n");
+    // printf("\n OUTPUT\n");
+    // printf("(%ld x %ld)\n", D_SEQ, D_MODEL >> 2);
+    // printf("==============\n");
+    // for(int i=0; i<(D_SEQ * D_MODEL >> 2); i++){
+    //     printf("[%d]\t", i);
+    //     std::cout << out[i] << " --> ";
+    //     int8_t *res_qk = (int8_t*)&out[i]; 
+    //     for(int j=0; j<4; j++){
+    //         printf("%d, ", res_qk[j]);
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
 
 
 

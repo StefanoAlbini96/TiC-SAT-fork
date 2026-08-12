@@ -108,10 +108,10 @@ void AddNormalize::computeRearranged(uint32_t *input, uint32_t *output) {
 void AddNormalize::computeRearranged_3Dnano(uint32_t *input, uint32_t *output, std::size_t kernelDim_h, std::size_t kernelDim_w) {
 
 
-    printf("\n=================\n");
-    printf("SEQ LEN = %ld\n", seq_len_);
-    printf("input_dim_ = %ld\n", input_dim_);
-    printf("J = 0 .... %ld / %ld = %ld\n", input_dim_, kernel_dim_, input_dim_ / kernel_dim_);
+    // printf("\n=================\n");
+    // printf("SEQ LEN = %ld\n", seq_len_);
+    // printf("input_dim_ = %ld\n", input_dim_);
+    // printf("J = 0 .... %ld / %ld = %ld\n", input_dim_, kernel_dim_, input_dim_ / kernel_dim_);
 
     auto* input_ptr = (int8_t*) (input );
     auto* output_ptr = (int8_t*) (output);

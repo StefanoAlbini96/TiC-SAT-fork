@@ -11,16 +11,16 @@ set(GCC_COVERAGE_COMPILE_FLAGS
         -DBWMA                  \
         -DREARRANGE             \
         -DSA                    \
-        -DSA_SIZE=8             \
+        -DSA_SIZE=8           \
         -DCORE_NUM=1            \
         -fopenmp                \
                                 \
         -DRELOAD_WEIGHT        \
                                 \
         -DNANO_3D               \
-        -DN_3D_LAYERS=2         \
-        -DSA_W=8                \
-        -DSA_H=16                \
+        -DN_3D_LAYERS=4         \
+        -DSA_W=8               \
+        -DSA_H=32                \
         -g      \
         -O0     \
         -fno-omit-frame-pointer")

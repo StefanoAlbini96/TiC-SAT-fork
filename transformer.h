@@ -5,17 +5,18 @@
 #ifndef FVLLMONTITRANSFORMER_TRANSFORMER_H
 #define FVLLMONTITRANSFORMER_TRANSFORMER_H
 
-#define D_Q 64
-#define D_SEQ 512
-#define D_MODEL 768
-#define NUM_HEAD 12
-#define D_FF 3072
+// #define D_Q 64
+// #define D_SEQ 512
+// #define D_MODEL 768
+// #define NUM_HEAD 12
+// #define D_FF 3072
 
-// #define D_Q      16
-// #define D_SEQ    32
-// #define D_MODEL  64
-// #define NUM_HEAD 4
-// #define D_FF     256
+// #define D_Q 128
+// #define D_SEQ 512
+// #define D_MODEL 768
+// #define NUM_HEAD 6
+// #define D_FF 3072
+
 
 // #define D_Q      8
 // #define D_SEQ    8
@@ -30,11 +31,11 @@
 // #define D_FF     256
 
 
-// #define D_Q      64
-// #define D_SEQ    768
-// #define D_MODEL  128
-// #define NUM_HEAD 2
-// #define D_FF     256
+#define D_Q      16
+#define D_SEQ    32
+#define D_MODEL  64
+#define NUM_HEAD 4
+#define D_FF     256
 
 
 

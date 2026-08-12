@@ -67,9 +67,9 @@ void Softmax::computeRearranged(uint32_t *input, std::size_t seq_len, std::size_
         input_uptr = ((uint8_t*) input) + i * kernelDim;
 
         // // REMOVE
-        // if ((sum >> 8) == 0){
-        //     sum = (sum << 8) +1;
-        // }
+        if ((sum >> 8) == 0){
+            sum = (sum << 8) +1;
+        }
         
         // printf("Set AGAIN inPTR to %d * %ld = %ld\n", i, kernelDim, i * kernelDim);
 
@@ -126,9 +126,9 @@ void Softmax::computeRearranged_3Dnano(uint32_t *input, std::size_t seq_len, std
         input_uptr = ((uint8_t*) input) + r * kernelDim_h;
 
         // // REMOVE
-        // if ((sum >> 8) == 0){
-        //     sum = (sum << 8) +1;
-        // }
+        if ((sum >> 8) == 0){
+            sum = (sum << 8) +1;
+        }
         
         // printf("Set AGAIN inPTR to %d * %ld = %ld\n", i, kernelDim, i * kernelDim);
 

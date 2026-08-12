@@ -87,7 +87,6 @@ void SingleHeadSelfAttn::compute(std::size_t seq_len, uint32_t *input, uint32_t 
     std::cout << "BWMA method" << std::endl;
 
     #ifdef NANO_3D
-    printf("3D nano\n");
     Transpose::transpose_rearranged_3Dnano(key_layer_out, key_transposed_layer_out, head_hidden_size_,
                                     pre_seq_len_, SA_H, SA_W, W_DATA, max_col_);
     #else
