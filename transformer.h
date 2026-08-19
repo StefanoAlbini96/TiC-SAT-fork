@@ -11,6 +11,19 @@
 // #define NUM_HEAD 12
 // #define D_FF 3072
 
+// #define D_Q 16
+// #define D_SEQ 128
+// #define D_MODEL 192
+// #define NUM_HEAD 3
+// #define D_FF 768
+
+
+// #define D_Q 16/3
+// #define D_SEQ 128/3
+// #define D_MODEL 192/3
+// #define NUM_HEAD 3/3
+// #define D_FF 768/3
+
 // #define D_Q 128
 // #define D_SEQ 512
 // #define D_MODEL 768

@@ -43,16 +43,18 @@ void TransformerBlock::compute(std::size_t seq_len, uint32_t *input, uint32_t *o
         selfatten[n]->compute(seq_len, input, multihead_out + n * (seq_len * head_hidden_size_ >> 2));
     }
 
+    printf("Done first\n");
+    exit(0);
 #ifndef BWMA
     Transpose::multihead_transpose(multihead_out, multihead_out_reshape,
                                    seq_len, head_hidden_size_ >> 2, num_heads_);
     multihead_out = multihead_out_reshape;
 #endif
 
-    std::cout << "\nCondense"  << std::endl;
+    // std::cout << "\nCondense"  << std::endl;
     condense->compute(seq_len, multihead_out, condense_out);
 
-    std::cout << "Add Norm"  << std::endl;
+    // std::cout << "Add Norm"  << std::endl;
 #ifdef BWMA
 
     #ifdef NANO_3D
@@ -68,13 +70,13 @@ void TransformerBlock::compute(std::size_t seq_len, uint32_t *input, uint32_t *o
 
     system("m5 dumpresetstats");
 
-    std::cout << "Feed Forward 0"  << std::endl;
+    // std::cout << "Feed Forward 0"  << std::endl;
     feedForward0->compute(seq_len, condense_out, intermediateFF);
 
-    std::cout << "Feed Forward 1"  << std::endl;
+    // std::cout << "Feed Forward 1"  << std::endl;
     feedForward1->compute(seq_len, intermediateFF, output);
 
-    std::cout << "Add Norm"  << std::endl;
+    // std::cout << "Add Norm"  << std::endl;
 
 #ifdef BWMA
 

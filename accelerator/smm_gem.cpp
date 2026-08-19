@@ -64,12 +64,15 @@ uint64_t smmStream(uint64_t rn, uint64_t tid=0) {
     __asm__ volatile(
     "MOV X7, %[input_k];"
     "MOV X8, %[input_i];"
-    ".long 0x01081D2A;"
+    ".long 0x6C81D2A;"
     "MOV %[output], X10;"
     : [output] "=r"(res)
     : [input_k] "r"(rn), [input_i] "r"(tid)
     : "x7", "x8", "x10"
     );
+
+
+    // ".long 0x01081D2A;"
 
     return res;
 }
@@ -94,13 +97,15 @@ uint64_t smmQueue(uint64_t rm, uint64_t rn, uint64_t tid=0) {
     "MOV X9, %[input_j];"
     "MOV X7, %[input_k];"
     "MOV X8, %[input_i];"
-    ".long 0x21089D2A;"
+    ".long 0x26D089D2;"
     "MOV %[output], X10;"
     : [output] "=r"(res)
     : [input_j] "r"(rm), [input_i] "r"(tid), [input_k] "r"(rn)
     : "x7", "x8", "x9", "x10"
     );
 
+    // ".long 0x21089D2A;"
+    
     return res;
 }
 
@@ -124,7 +129,7 @@ uint64_t smmParamWrite(uint64_t rm, uint64_t rn, int tid=0) {
     "MOV X9, %[input_j];"
     "MOV X7, %[input_k];"
     "MOV X8, %[input_i];"
-    ".long 0x41081D2A;"
+    ".long 0x46C81D2A;"
     "MOV %[output], X10;"
     : [output] "=r"(res)
     : [input_j] "r"(rm), [input_i] "r"(tid), [input_k] "r"(rn)
@@ -134,6 +139,135 @@ uint64_t smmParamWrite(uint64_t rm, uint64_t rn, int tid=0) {
     return res;
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+#ifdef NANO_3D
+
+/* CM Core Process (MVM)
+* Instruction format: |____Opcode___|__rm__|_X|__ra__|__rn__|__rd__|
+* Bits:               |31_________21|20__16|15|14__10|9____5|4____0|
+* Binary layout:      |0000_0001_000|0_1000|_0|001_11|01_001|0_1010|
+* Hex layout:         |__0____1____0|____8_|__|_1____|D____2|____A_|
+* gem5 variables:     |_____________|_Op264|__|_Op364|_Op164|Dest64|
+*
+* Queueing arguments:
+* -- rd = Systolic Array Output.
+* -- rm = Unused.
+* -- ra = Thread index.
+* -- rn = Parameter value.
+*/
+
+uint64_t smmStream_3Dnano(uint64_t rn, uint64_t out_cnt) {
+    uint64_t res;
+
+    // printf("STREAM foo %d\n", rn);
+
+    __asm__ volatile(
+    "MOV X7, %[input_k];"
+    "MOV X8, %[input_i];"
+    ".long 0x6481D2A;"
+    "MOV %[output], X10;"
+    : [output] "=r"(res)
+    : [input_k] "r"(rn), [input_i] "r"(out_cnt)
+    : "x7", "x8", "x10"
+    );
+
+    // ".long 0x01081D2A;"
+
+    return res;
+}
+
+/* CM Core Queue (MVM)
+* Instruction format: |____Opcode___|__rm__|_X|__ra__|__rn__|__rd__|
+* Bits:               |31_________21|20__16|15|14__10|9____5|4____0|
+* Binary layout:      |0010_0001_000|0_1000|_0|001_11|01_001|0_1010|
+* Hex layout:         |__2____1____0|____8_|__|_1____|D____2|____A_|
+* gem5 variables:     |_____________|_Op264|__|_Op364|_Op164|Dest64|
+*
+* Queueing arguments:
+* -- rd = Systolic Array output.
+* -- rm = Parameter index.
+* -- ra = Thread index.
+* -- rn = Parameter value.
+*/
+uint64_t smmQueue_3Dnano(uint64_t rm, uint64_t rn, uint64_t out_cnt) {
+    uint64_t res;
+
+
+    // printf("ENQUEUE foo %u\n", rn);
+
+    __asm__ volatile(
+    "MOV X9, %[input_j];"
+    "MOV X7, %[input_k];"
+    "MOV X8, %[input_i];"
+    ".long 0x26489D2A;"
+    "MOV %[output], X10;"
+    : [output] "=r"(res)
+    : [input_j] "r"(rm), [input_i] "r"(out_cnt), [input_k] "r"(rn)
+    : "x7", "x8", "x9", "x10"
+    );
+// 46481D2A
+    // ".long 0x21089D2A;"
+    
+    return res;
+}
+
+/* CM Core Parameter Write
+ * Instruction format: |____Opcode___|__rm__|_?|__ra__|__rn__|__rd__|
+ * Bits:               |31_________21|20__16|15|14__10|9____5|4____0|
+ * Binary layout:      |0100_0001_000|0_1000|_0|001_11|01_001|0_1010|
+ * Hex layout:         |__4____1____0|____8_|__|_1____|D____2|____A_|
+ * gem5 variables:     |_____________|_Op264|__|_Op364|_Op164|Dest64|
+ *
+ * Queueing arguments:
+* -- rd = Zero tile code.
+* -- rm = Parameter index.
+* -- ra = Thread index.
+* -- rn = Parameter value.
+ */
+uint64_t smmParamWrite_3Dnano(uint64_t rm, uint64_t rn, int layer) {
+    uint64_t res;
+
+    // printf("LOADING FOR layer = %d\n", layer);
+
+    __asm__ volatile(
+    "MOV X9, %[input_j];"
+    "MOV X7, %[input_k];"
+    "MOV X8, %[input_i];"
+    ".long 0x46481D2A;"
+    "MOV %[output], X10;"
+    : [output] "=r"(res)
+    : [input_j] "r"(rm), [input_i] "r"(layer), [input_k] "r"(rn)
+    : "x7", "x8", "x9", "x10"
+    );
+
+    return res;
+
+}
+
+
+#endif
+
+
+
+
+
+
+
+
+
+
+
 
 #else
 
@@ -194,13 +328,14 @@ void smmComputeRWMA(std::size_t seq_len, const uint32_t *input, uint32_t *output
     int rowMaxL2 = std::min(256, (int) (input_size_)) / KERNEL_DIM / rowMaxL1;
     int colMaxL2 = std::min(256, (int) (output_size_)) / KERNEL_DIM / colMaxL1;
 
-    omp_set_num_threads(CORE_NUM); // set number of threads in "parallel" blocks
+    // omp_set_num_threads(CORE_NUM); // set number of threads in "parallel" blocks
 
     int col_in_th = ROWS_IN_L2 / CORE_NUM;
 
-#pragma omp parallel
-    {
-        int omp_id = omp_get_thread_num();
+    int omp_id = 0;
+// #pragma omp parallel
+//     {
+//         int omp_id = omp_get_thread_num();
     for (int l2In = 0; l2In < (int) ceil((float) seq_len / (float) ROWS_IN_BLOCK / (float) ROWS_IN_L2); l2In++) {
         for (int l2Row = 0; l2Row < (input_size_ / KERNEL_DIM) / rowMaxL2 / rowMaxL1; l2Row++) {
             for (int l2Col = 0; l2Col < (output_size_ / KERNEL_DIM) / colMaxL2 / colMaxL1; l2Col++) {
@@ -276,7 +411,7 @@ void smmComputeRWMA(std::size_t seq_len, const uint32_t *input, uint32_t *output
             }
         }
     }
-    }
+    // }
 }
 
 
@@ -331,6 +466,7 @@ int col_blocks_in_3DStack = output_size_ / SA_W / N_3D_LAYERS;
     // printf("\nN loops:\n");
     // printf("l2Col 3D  = \t %d : %d\n", 0, col_blocks_in_3DStack);
     // printf("l2Row 3D  = \t %d : %d\n", 0, row_blocks_in_3DStack);
+                            
 
     for (int l2Col_3D_block = 0; l2Col_3D_block < col_blocks_in_3DStack; l2Col_3D_block++){
 
@@ -391,8 +527,13 @@ int col_blocks_in_3DStack = output_size_ / SA_W / N_3D_LAYERS;
                     // printf("\nIn cnt GRUP = %d\n", in_cnt_group);
                     // printf("In cnt % N3D = %d\n", in_cnt_group % N_3D_LAYERS);
                     
-                    // printf("IN = %d\n", content);
-                
+                    // std::cout << "IN = " << content << " --> ";
+                    // int8_t *res_qk = (int8_t*)&content; 
+                    // for(int j=0; j<4; j++){
+                    //     printf("%d, ", res_qk[j]);
+                    // }
+                    // printf("\n");
+
 
                     if (j == MAX_COL - 1) {
                         // printf("COMPUTE: \n");
@@ -404,6 +545,8 @@ int col_blocks_in_3DStack = output_size_ / SA_W / N_3D_LAYERS;
                     } else {
                         // printf("ENQUEUE\n");
                         mult = smmQueue_3Dnano(j % MAX_COL, content, out_cnt);
+
+                        // exit(0);
                     }
 
                     bool latency_condition = (sa_cycles >= ((SA_H + SA_W - 1)));
@@ -448,6 +591,7 @@ int col_blocks_in_3DStack = output_size_ / SA_W / N_3D_LAYERS;
                     if (latency_condition) {
                         // printf("USE OUTPUT...\n");
 
+                        // printf("Mult = %d\n", mult);
                         add8in32(*(outPtr++), mult);
                         out_cnt++;
                         if(out_cnt >= MAX_COL){
@@ -476,15 +620,15 @@ int col_blocks_in_3DStack = output_size_ / SA_W / N_3D_LAYERS;
 
 void smmComputeBWMA(std::size_t seq_len, uint32_t *input, uint32_t *output, uint32_t *weights,
                     std::size_t input_size_, std::size_t output_size_) {
-    omp_set_num_threads(CORE_NUM); // set number of threads in "parallel" blocks
+    // omp_set_num_threads(CORE_NUM); // set number of threads in "parallel" blocks
 uint32_t *inPtr;
 uint32_t *outPtr;
 uint32_t* weightPtr;
 int rowBlockSize = KERNEL_DIM;
 int colBlockSize = KERNEL_DIM / W_DATA;
 int col_in_th = output_size_ / KERNEL_DIM /  CORE_NUM;
-# pragma omp parallel private(inPtr, outPtr, weightPtr)
-{
+// # pragma omp parallel private(inPtr, outPtr, weightPtr)
+// {
 
 // int col_in_th = output_size_ / KERNEL_DIM /  N_3D_LAYERS;
 // for(int id=0; id<N_3D_LAYERS; id++){
@@ -501,10 +645,12 @@ int col_in_th = output_size_ / KERNEL_DIM /  CORE_NUM;
     // printf("Col block = \t %d\n", colBlockSize);
     // printf("Col in TH = \t %d\n", col_in_th);
     // printf("====================\n");
+    // std::cout << "FLUSH" << std::endl;
 
     int cnt = 0;
 
-    int id = omp_get_thread_num();
+    // int id = omp_get_thread_num();
+    int id = 0;
     int start_index = col_in_th * id;
     int end_index = start_index + col_in_th;
     weightPtr = weights + start_index * (input_size_ / KERNEL_DIM) * rowBlockSize * colBlockSize;
@@ -522,6 +668,7 @@ int col_in_th = output_size_ / KERNEL_DIM /  CORE_NUM;
             // printf("L2 COL  = %d\n", l2Col);
             // printf("L2 ROW  = %d\n", l2Row);
             // cnt++;
+            // std::cout << "FLUSH" << std::endl;
 
             for (int i = 0; i < rowBlockSize * colBlockSize; i++) {
                 uint32_t weight = *(weightPtr++);
@@ -587,7 +734,7 @@ int col_in_th = output_size_ / KERNEL_DIM /  CORE_NUM;
     }
 }
 // exit(0);
-}
+// }
 
 
 
@@ -618,6 +765,7 @@ void add8in32(uint32_t &memory, uint32_t &systolicResult) {
 
 void conventionalCompute(std::size_t seq_len, const uint32_t *input, uint32_t *output, uint32_t *weight,
                          std::size_t input_size_, std::size_t output_size_) {
+                            // printf("NO\n");
     for (int length = 0; length < seq_len; length++) {
         for (int out_idx = 0; out_idx < (output_size_ / W_DATA); out_idx++) {
             auto *weight_ptr = (int8_t *) (weight + out_idx);
@@ -637,6 +785,7 @@ void conventionalCompute(std::size_t seq_len, const uint32_t *input, uint32_t *o
 
 void tiledCompute(std::size_t seq_len, const uint32_t *input, uint32_t *output, uint32_t *weight,
                   std::size_t input_size_, std::size_t output_size_) {
+                    // printf("TILED\n");
     int ROWS_IN_BLOCK = std::min(128, (int) (seq_len));
     int COLS_IN_BLOCK = std::min(32, (int) (input_size_));
     int ratio = 32 / COLS_IN_BLOCK;

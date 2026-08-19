@@ -50,6 +50,7 @@ void SingleHeadSelfAttn::compute(std::size_t seq_len, uint32_t *input, uint32_t 
     
     // printf("outPtr = %p\n", (void*)query_layer_out);
     // printf("Query compute() with:\n- seq len = \t %ld\n", seq_len);
+    std::cout << "Query:" << std::endl;
     query_layer->compute(seq_len, input, query_layer_out);
     // printf("\n==========================\n");
     // printf("QUERY LAYER OUT:\n");
@@ -65,9 +66,10 @@ void SingleHeadSelfAttn::compute(std::size_t seq_len, uint32_t *input, uint32_t 
     //     }
     //     printf("\n");
     // }
-    // exit(0);
+    std::cout << "Done query" << std::endl;
+    exit(0);
 
-    // printf("Key\n");
+    std::cout << "Key:" << std::endl;
     key_layer->compute(seq_len, input, key_layer_out);
     int8_t *res_p_k = (int8_t*)key_layer_out; 
     // printf("\n==========================\n");
@@ -75,7 +77,7 @@ void SingleHeadSelfAttn::compute(std::size_t seq_len, uint32_t *input, uint32_t 
 
 
 
-    // printf("Value\n");
+    std::cout << "Value:" << std::endl;
     value_layer->compute(seq_len, input, value_layer_out);
     // printf("\n==========================\n");
     // printf("VALUE LAYER OUT:\n");
@@ -84,7 +86,7 @@ void SingleHeadSelfAttn::compute(std::size_t seq_len, uint32_t *input, uint32_t 
 
 #ifdef BWMA
 
-    std::cout << "BWMA method" << std::endl;
+    // std::cout << "BWMA method" << std::endl;
 
     #ifdef NANO_3D
     Transpose::transpose_rearranged_3Dnano(key_layer_out, key_transposed_layer_out, head_hidden_size_,

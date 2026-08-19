@@ -15,14 +15,12 @@ set(GCC_COVERAGE_COMPILE_FLAGS
         -DCORE_NUM=1            \
         -fopenmp                \
                                 \
-        -DRELOAD_WEIGHT        \
                                 \
-        -DNANO_3D               \
-        -DN_3D_LAYERS=4         \
-        -DSA_W=8               \
-        -DSA_H=32                \
+        -DN_3D_LAYERS=2         \
+        -DSA_W=4               \
+        -DSA_H=8                \
         -g      \
-        -O0     \
+        -O2     \
         -fno-omit-frame-pointer")
 
         # -fsanitize=address \

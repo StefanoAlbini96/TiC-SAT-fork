@@ -54,12 +54,16 @@ void print_buf_3Dnano(int8_t *ptr, int height, int width){
 
 bool SystolicMatrixMultiplication_3D::loadWeights(int idx, uint32_t val, int layer) {
     
-    // printf("LOADING idx %d  |  layer = %d\n", idx, layer);
+    printf("LOADING idx %d  |  layer = %d\n", idx, layer);
     for (int i=0; i < W_DATA; i++){
         auto currVal = (int8_t)((val >> (8 * (W_DATA -i-1))) & 0xff);
         // printf("%d\n", currVal);
         weights[layer][idx + i] = currVal;
     }
+
+    // print_buf_3Dnano((int8_t*)weights[0], SA_H, SA_W);
+    // printf("\n");
+
     if (val!=0)
         non_zero_tile = true;
     return non_zero_tile;
@@ -69,6 +73,8 @@ bool SystolicMatrixMultiplication_3D::loadWeights(int idx, uint32_t val, int lay
 // Puts the new word of input and also reads a result word
 uint32_t SystolicMatrixMultiplication_3D::inputQueue_3Dnano(int col, uint32_t val, int out_cnt) {
 
+
+    printf("\nEnqueueing in col = %d  | out_Cnt = %d\n", col, out_cnt);
 
     // printf("Enqueueing in col = %d\n", col);
     // print_buf(inWaitingMemory, SA_H, SA_H);
@@ -153,6 +159,7 @@ void SystolicMatrixMultiplication_3D::printWeights() {
 
 uint32_t SystolicMatrixMultiplication_3D::streamInOut_3Dnano(uint32_t val, int out_cnt) {
 
+    printf("\n INPUTTING val = %u  | out_Cnt = %d\n", val, out_cnt);
 
     for (int layer = 0; layer < N_3D_LAYERS; layer++){
         // printf("------------------------\n FUNC\n");
