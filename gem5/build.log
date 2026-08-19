@@ -1,0 +1,10 @@
+scons: Reading SConscript files ...
+Mkdir("/home/albini/Documents/ESL/TiC-SAT-fork/gem5/build/gem5./gem5.build")
+Checking for linker -Wl,--as-needed support... yes
+Warning: Detected GCC version 9.4.0 is not officially supported.
+         gem5 supports GCC v11 up to v14.2.
+Checking for compiler -gz support... yes
+Checking for linker -gz support... yes
+Info: Using Python config: python3-config
+Checking for C header file Python.h... yes
+Checking Python version... 
